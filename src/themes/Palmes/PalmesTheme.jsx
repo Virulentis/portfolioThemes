@@ -11,6 +11,10 @@ import Projects from './components/Projects';
 import Technologies from './components/Technologies';
 import Education from './components/Education';
 import Awards from './components/Awards';
+import Publications from './components/Publications';
+import Presentations from './components/Presentations';
+import ProfessionalDevelopment from './components/ProfessionalDevelopment';
+import Volunteer from './components/Volunteer';
 
 const GlobalStyle = createGlobalStyle`
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -173,6 +177,10 @@ export function PalmesTheme() {
   const skills = cv?.sections?.skills || cv?.sections?.certifications_skills || [];
   const education = cv?.sections?.education || [];
   const awards = cv?.sections?.awards || [];
+  const publications = cv?.sections?.publications || [];
+  const presentations = cv?.sections?.presentations || [];
+  const professionalDevelopment = cv?.sections?.professional_development || [];
+  const volunteer = cv?.sections?.volunteer || [];
 
   return (
     <>
@@ -190,6 +198,10 @@ export function PalmesTheme() {
             <Technologies skills={skills} />
             <Education education={education} />
             <Awards awards={awards} />
+            <Publications publications={publications} />
+            <Presentations presentations={presentations} />
+            <ProfessionalDevelopment items={professionalDevelopment} />
+            <Volunteer volunteer={volunteer} />
             <Footer>
               <p>
                 Built with{' '}

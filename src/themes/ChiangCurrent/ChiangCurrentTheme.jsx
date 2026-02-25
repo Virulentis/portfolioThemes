@@ -104,6 +104,14 @@ export function ChiangCurrentTheme() {
     return cv?.sections?.professional_development || [];
   }, [cv]);
 
+  const educationItems = useMemo(() => {
+    return cv?.sections?.education || [];
+  }, [cv]);
+
+  const volunteerItems = useMemo(() => {
+    return cv?.sections?.volunteer || [];
+  }, [cv]);
+
   const socials = cv?.social || [];
   const githubUrl = pickSocialUrl(socials, ['github']);
   const linkedinUrl = pickSocialUrl(socials, ['linkedin']);
@@ -141,7 +149,7 @@ export function ChiangCurrentTheme() {
   useEffect(() => {
     const handleScroll = (e) => {
       const container = e.target;
-      const sections = ['about', 'experience', 'projects'];
+      const sections = ['about', 'experience', 'projects', 'education', 'volunteer'];
       for (const id of sections) {
         const el = container.querySelector(`#${id}`);
         if (el) {
@@ -198,6 +206,18 @@ export function ChiangCurrentTheme() {
               <NavLine $active={activeSection === 'projects'} />
               <NavText>Projects</NavText>
             </NavItem>
+            {educationItems.length > 0 && (
+              <NavItem href="#education" $active={activeSection === 'education'}>
+                <NavLine $active={activeSection === 'education'} />
+                <NavText>Education</NavText>
+              </NavItem>
+            )}
+            {volunteerItems.length > 0 && (
+              <NavItem href="#volunteer" $active={activeSection === 'volunteer'}>
+                <NavLine $active={activeSection === 'volunteer'} />
+                <NavText>Volunteer</NavText>
+              </NavItem>
+            )}
             {awardItems.length > 0 && (
               <NavItem href="#awards" $active={activeSection === 'awards'}>
                 <NavLine $active={activeSection === 'awards'} />
@@ -330,6 +350,49 @@ export function ChiangCurrentTheme() {
               ))}
             </ProjectsList>
           </Section>
+
+          {educationItems.length > 0 && (
+            <Section id="education">
+              <MobileSectionHeader>
+                <MobileSectionTitle>Education</MobileSectionTitle>
+              </MobileSectionHeader>
+              <ExperienceList>
+                {educationItems.map((edu, idx) => (
+                  <ExperienceCard key={`edu-${idx}`}>
+                    <ExperienceDate>{formatDateRange(edu.start_date, edu.end_date)}</ExperienceDate>
+                    <ExperienceContent>
+                      <ExperienceTitle>
+                        {edu.degree} in {edu.area} · <ExperienceCompany>{edu.institution}</ExperienceCompany>
+                      </ExperienceTitle>
+                    </ExperienceContent>
+                  </ExperienceCard>
+                ))}
+              </ExperienceList>
+            </Section>
+          )}
+
+          {volunteerItems.length > 0 && (
+            <Section id="volunteer">
+              <MobileSectionHeader>
+                <MobileSectionTitle>Volunteer</MobileSectionTitle>
+              </MobileSectionHeader>
+              <ExperienceList>
+                {volunteerItems.map((vol, idx) => (
+                  <ExperienceCard key={`vol-${idx}`}>
+                    <ExperienceDate>{formatDateRange(vol.start_date, vol.end_date)}</ExperienceDate>
+                    <ExperienceContent>
+                      <ExperienceTitle>
+                        {vol.position || vol.title} · <ExperienceCompany>{vol.organization}</ExperienceCompany>
+                      </ExperienceTitle>
+                      {vol.summary && (
+                        <ExperienceDescription>{vol.summary}</ExperienceDescription>
+                      )}
+                    </ExperienceContent>
+                  </ExperienceCard>
+                ))}
+              </ExperienceList>
+            </Section>
+          )}
 
           {awardItems.length > 0 && (
             <Section id="awards">

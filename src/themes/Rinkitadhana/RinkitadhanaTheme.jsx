@@ -138,6 +138,26 @@ export function RinkitadhanaTheme() {
     return (cv?.sections?.education || []).filter(e => !isArchived(e));
   }, [cv]);
 
+  const volunteerItems = useMemo(() => {
+    return (cv?.sections?.volunteer || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  const awardItems = useMemo(() => {
+    return (cv?.sections?.awards || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  const publicationItems = useMemo(() => {
+    return (cv?.sections?.publications || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  const presentationItems = useMemo(() => {
+    return (cv?.sections?.presentations || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  const professionalDevItems = useMemo(() => {
+    return (cv?.sections?.professional_development || []).filter(e => !isArchived(e));
+  }, [cv]);
+
   return (
     <Container $dark={isDark}>
       {/* Top dot grid section */}
@@ -374,6 +394,173 @@ export function RinkitadhanaTheme() {
                     <DateRange $dark={isDark}>
                       {formatDate(edu.start_date)} - {formatDate(edu.end_date) || 'Present'}
                     </DateRange>
+                  </ExperienceRight>
+                </ExperienceItem>
+              ))}
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+        </>
+      )}
+
+      {/* Volunteer section */}
+      {volunteerItems.length > 0 && (
+        <>
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark}>
+              <SectionTitle $dark={isDark}>Volunteer</SectionTitle>
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark} $noPadding>
+              {volunteerItems.map((vol, idx) => (
+                <ExperienceItem key={idx} $dark={isDark}>
+                  <ExperienceLeft>
+                    <CompanyIcon $dark={isDark}>
+                      {vol.organization?.charAt(0) || '?'}
+                    </CompanyIcon>
+                    <ExperienceInfo>
+                      <CompanyName $dark={isDark}>{vol.organization}</CompanyName>
+                      <RoleTitle $dark={isDark}>{vol.position || vol.title}</RoleTitle>
+                    </ExperienceInfo>
+                  </ExperienceLeft>
+                  <ExperienceRight>
+                    <DateRange $dark={isDark}>
+                      {formatDate(vol.start_date)} - {formatDate(vol.end_date) || 'Present'}
+                    </DateRange>
+                  </ExperienceRight>
+                </ExperienceItem>
+              ))}
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+        </>
+      )}
+
+      {/* Awards section */}
+      {awardItems.length > 0 && (
+        <>
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark}>
+              <SectionTitle $dark={isDark}>Awards</SectionTitle>
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark} $noPadding>
+              {awardItems.map((award, idx) => (
+                <ExperienceItem key={idx} $dark={isDark}>
+                  <ExperienceLeft>
+                    <CompanyIcon $dark={isDark}>★</CompanyIcon>
+                    <ExperienceInfo>
+                      <CompanyName $dark={isDark}>{award.name}</CompanyName>
+                      {award.summary && <RoleTitle $dark={isDark}>{award.summary}</RoleTitle>}
+                    </ExperienceInfo>
+                  </ExperienceLeft>
+                  <ExperienceRight>
+                    <DateRange $dark={isDark}>{award.date}</DateRange>
+                  </ExperienceRight>
+                </ExperienceItem>
+              ))}
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+        </>
+      )}
+
+      {/* Publications section */}
+      {publicationItems.length > 0 && (
+        <>
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark}>
+              <SectionTitle $dark={isDark}>Publications</SectionTitle>
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark} $noPadding>
+              {publicationItems.map((pub, idx) => (
+                <ExperienceItem key={idx} $dark={isDark}>
+                  <ExperienceLeft>
+                    <CompanyIcon $dark={isDark}>
+                      {pub.title?.charAt(0) || '?'}
+                    </CompanyIcon>
+                    <ExperienceInfo>
+                      <CompanyName $dark={isDark}>{pub.title}</CompanyName>
+                      <RoleTitle $dark={isDark}>{pub.journal}</RoleTitle>
+                    </ExperienceInfo>
+                  </ExperienceLeft>
+                  <ExperienceRight>
+                    <DateRange $dark={isDark}>{formatDate(pub.date)}</DateRange>
+                  </ExperienceRight>
+                </ExperienceItem>
+              ))}
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+        </>
+      )}
+
+      {/* Presentations section */}
+      {presentationItems.length > 0 && (
+        <>
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark}>
+              <SectionTitle $dark={isDark}>Presentations</SectionTitle>
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark} $noPadding>
+              {presentationItems.map((pres, idx) => (
+                <ExperienceItem key={idx} $dark={isDark}>
+                  <ExperienceLeft>
+                    <CompanyIcon $dark={isDark}>
+                      {pres.name?.charAt(0) || '?'}
+                    </CompanyIcon>
+                    <ExperienceInfo>
+                      <CompanyName $dark={isDark}>{pres.name}</CompanyName>
+                      {pres.summary && <RoleTitle $dark={isDark}>{pres.summary}</RoleTitle>}
+                    </ExperienceInfo>
+                  </ExperienceLeft>
+                  <ExperienceRight>
+                    <DateRange $dark={isDark}>{formatDate(pres.date)}</DateRange>
+                    {pres.location && <Location $dark={isDark}>{pres.location}</Location>}
+                  </ExperienceRight>
+                </ExperienceItem>
+              ))}
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+        </>
+      )}
+
+      {/* Professional Development section */}
+      {professionalDevItems.length > 0 && (
+        <>
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark}>
+              <SectionTitle $dark={isDark}>Professional Development</SectionTitle>
+            </ContentWrapper>
+          </Section>
+          <DashedLine $dark={isDark} />
+          <Section $dark={isDark}>
+            <ContentWrapper $dark={isDark} $noPadding>
+              {professionalDevItems.map((item, idx) => (
+                <ExperienceItem key={idx} $dark={isDark}>
+                  <ExperienceLeft>
+                    <CompanyIcon $dark={isDark}>
+                      {item.name?.charAt(0) || '?'}
+                    </CompanyIcon>
+                    <ExperienceInfo>
+                      <CompanyName $dark={isDark}>{item.name}</CompanyName>
+                      {item.summary && <RoleTitle $dark={isDark}>{item.summary}</RoleTitle>}
+                    </ExperienceInfo>
+                  </ExperienceLeft>
+                  <ExperienceRight>
+                    <DateRange $dark={isDark}>{formatDate(item.date)}</DateRange>
+                    {item.location && <Location $dark={isDark}>{item.location}</Location>}
                   </ExperienceRight>
                 </ExperienceItem>
               ))}

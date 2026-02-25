@@ -66,7 +66,9 @@ const tileConfig = [
   { id: 'skills', number: '03', title: 'Skills', accent: '#3b82f6' },
   { id: 'about', number: '04', title: 'About', accent: '#a855f7' },
   { id: 'education', number: '05', title: 'Education', accent: '#ec4899' },
-  { id: 'contact', number: '06', title: 'Contact', accent: '#06b6d4' },
+  { id: 'awards', number: '06', title: 'Awards', accent: '#eab308' },
+  { id: 'more', number: '07', title: 'More', accent: '#14b8a6' },
+  { id: 'contact', number: '08', title: 'Contact', accent: '#06b6d4' },
 ];
 
 export function U11gTheme() {
@@ -128,6 +130,31 @@ export function U11gTheme() {
   // Education
   const educationItems = useMemo(() => {
     return (cv?.sections?.education || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  // Awards
+  const awardItems = useMemo(() => {
+    return (cv?.sections?.awards || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  // Volunteer
+  const volunteerItems = useMemo(() => {
+    return (cv?.sections?.volunteer || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  // Publications
+  const publicationItems = useMemo(() => {
+    return (cv?.sections?.publications || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  // Presentations
+  const presentationItems = useMemo(() => {
+    return (cv?.sections?.presentations || []).filter(e => !isArchived(e));
+  }, [cv]);
+
+  // Professional Development
+  const professionalDevItems = useMemo(() => {
+    return (cv?.sections?.professional_development || []).filter(e => !isArchived(e));
   }, [cv]);
 
   // Command palette keyboard shortcut
@@ -268,6 +295,68 @@ export function U11gTheme() {
                     {edu.studyType && edu.area && <WorkDesc>{edu.studyType}</WorkDesc>}
                   </WorkItem>
                 ))}
+              </WorkList>
+            )}
+            {activePage === 'awards' && (
+              <WorkList>
+                {awardItems.map((award, idx) => (
+                  <WorkItem key={idx}>
+                    <WorkCompany>{award.date}</WorkCompany>
+                    <WorkTitle>{award.name}</WorkTitle>
+                    {award.summary && <WorkDesc>{award.summary}</WorkDesc>}
+                  </WorkItem>
+                ))}
+              </WorkList>
+            )}
+            {activePage === 'more' && (
+              <WorkList>
+                {volunteerItems.length > 0 && (
+                  <>
+                    <SubpageSectionLabel>Volunteer</SubpageSectionLabel>
+                    {volunteerItems.map((vol, idx) => (
+                      <WorkItem key={`vol-${idx}`}>
+                        <WorkCompany>{vol.organization}</WorkCompany>
+                        <WorkTitle>{vol.position || vol.title}</WorkTitle>
+                        {vol.summary && <WorkDesc>{vol.summary}</WorkDesc>}
+                      </WorkItem>
+                    ))}
+                  </>
+                )}
+                {publicationItems.length > 0 && (
+                  <>
+                    <SubpageSectionLabel>Publications</SubpageSectionLabel>
+                    {publicationItems.map((pub, idx) => (
+                      <WorkItem key={`pub-${idx}`}>
+                        <WorkCompany>{pub.journal} ({pub.date})</WorkCompany>
+                        <WorkTitle>{pub.title}</WorkTitle>
+                      </WorkItem>
+                    ))}
+                  </>
+                )}
+                {presentationItems.length > 0 && (
+                  <>
+                    <SubpageSectionLabel>Presentations</SubpageSectionLabel>
+                    {presentationItems.map((pres, idx) => (
+                      <WorkItem key={`pres-${idx}`}>
+                        <WorkCompany>{pres.date}{pres.location ? ` — ${pres.location}` : ''}</WorkCompany>
+                        <WorkTitle>{pres.name}</WorkTitle>
+                        {pres.summary && <WorkDesc>{pres.summary}</WorkDesc>}
+                      </WorkItem>
+                    ))}
+                  </>
+                )}
+                {professionalDevItems.length > 0 && (
+                  <>
+                    <SubpageSectionLabel>Professional Development</SubpageSectionLabel>
+                    {professionalDevItems.map((item, idx) => (
+                      <WorkItem key={`pd-${idx}`}>
+                        <WorkCompany>{item.date}{item.location ? ` — ${item.location}` : ''}</WorkCompany>
+                        <WorkTitle>{item.name}</WorkTitle>
+                        {item.summary && <WorkDesc>{item.summary}</WorkDesc>}
+                      </WorkItem>
+                    ))}
+                  </>
+                )}
               </WorkList>
             )}
             {activePage === 'contact' && (
@@ -713,6 +802,19 @@ const ProjectDesc = styled.p`
   color: ${colors.secondary};
   margin: 0;
   line-height: 1.5;
+`;
+
+const SubpageSectionLabel = styled.h2`
+  font-size: 14px;
+  text-transform: uppercase;
+  color: ${colors.secondary};
+  margin: 24px 0 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid ${colors.passive};
+
+  &:first-child {
+    margin-top: 0;
+  }
 `;
 
 const WorkList = styled.div`

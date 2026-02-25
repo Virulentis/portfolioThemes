@@ -43,6 +43,7 @@ export function KubreTheme() {
   const presentationItems = (sectionsRaw?.presentations || []).filter(e => !isArchived(e));
   const publicationItems = (sectionsRaw?.publications || []).filter(e => !isArchived(e));
   const professionalDevItems = (sectionsRaw?.professional_development || []).filter(e => !isArchived(e));
+  const volunteerItems = (sectionsRaw?.volunteer || []).filter(e => !isArchived(e));
 
   // Get first name
   const firstName = name?.split(' ')[0] || 'User';
@@ -93,7 +94,7 @@ export function KubreTheme() {
           >
             ≥ WORK
           </NavItem>
-          {(awardItems.length > 0 || presentationItems.length > 0 || publicationItems.length > 0 || professionalDevItems.length > 0) && (
+          {(awardItems.length > 0 || presentationItems.length > 0 || publicationItems.length > 0 || professionalDevItems.length > 0 || volunteerItems.length > 0) && (
             <NavItem
               $active={activeTab === 'more'}
               onClick={() => setActiveTab('more')}
@@ -349,6 +350,21 @@ export function KubreTheme() {
                       <EducationDate>{item.date}</EducationDate>
                       <EducationDegree>{item.name}</EducationDegree>
                       {item.location && <EducationSchool>{item.location}</EducationSchool>}
+                    </EducationItem>
+                  ))}
+                </EducationList>
+              </>
+            )}
+
+            {volunteerItems.length > 0 && (
+              <>
+                <SectionTitle># Volunteer</SectionTitle>
+                <EducationList>
+                  {volunteerItems.map((vol, idx) => (
+                    <EducationItem key={`vol-${idx}`}>
+                      <EducationDate>{isPresent(vol.end_date) ? 'Present' : vol.end_date}</EducationDate>
+                      <EducationDegree>{vol.position || vol.title}</EducationDegree>
+                      <EducationSchool>{vol.organization}</EducationSchool>
                     </EducationItem>
                   ))}
                 </EducationList>

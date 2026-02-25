@@ -63,6 +63,7 @@ const NAV_ITEMS = [
   { id: 'experience', label: 'experience' },
   { id: 'projects', label: 'projects' },
   { id: 'education', label: 'education' },
+  { id: 'volunteer', label: 'volunteer' },
   { id: 'awards', label: 'awards' },
   { id: 'publications', label: 'publications' },
   { id: 'prof-dev', label: 'prof. dev.' },
@@ -113,12 +114,17 @@ export function JoshBradleyTheme() {
     return (cv?.sections?.professional_development || []).filter(e => !isArchived(e));
   }, [cv]);
 
+  const volunteerItems = useMemo(() => {
+    return (cv?.sections?.volunteer || []).filter(e => !isArchived(e));
+  }, [cv]);
+
   // Filter nav items based on available content
   const visibleNavItems = NAV_ITEMS.filter(item => {
     if (item.id === 'about') return true;
     if (item.id === 'experience') return experienceGroups.length > 0;
     if (item.id === 'projects') return projectItems.length > 0;
     if (item.id === 'education') return educationItems.length > 0;
+    if (item.id === 'volunteer') return volunteerItems.length > 0;
     if (item.id === 'awards') return awardItems.length > 0 || presentationItems.length > 0;
     if (item.id === 'publications') return publicationItems.length > 0;
     if (item.id === 'prof-dev') return professionalDevItems.length > 0;
@@ -186,6 +192,22 @@ export function JoshBradleyTheme() {
                   <LeaderTitle>{edu.degree} in {edu.area}, {edu.institution}</LeaderTitle>
                   <LeaderDots />
                   <LeaderDate>{formatDate(edu.end_date) || formatDate(edu.start_date)}</LeaderDate>
+                </LeaderItem>
+              ))}
+            </LeaderList>
+          </Article>
+        );
+
+      case 'volunteer':
+        return (
+          <Article>
+            <PageTitle>Volunteer</PageTitle>
+            <LeaderList>
+              {volunteerItems.map((vol, idx) => (
+                <LeaderItem key={`vol-${idx}`}>
+                  <LeaderTitle>{vol.position || vol.title}, {vol.organization}</LeaderTitle>
+                  <LeaderDots />
+                  <LeaderDate>{formatDate(vol.end_date) || formatDate(vol.start_date)}</LeaderDate>
                 </LeaderItem>
               ))}
             </LeaderList>

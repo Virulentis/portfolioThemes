@@ -82,6 +82,10 @@ export function BrutalistTheme() {
     return cv?.sections?.professional_development || [];
   }, [cv]);
 
+  const volunteerItems = useMemo(() => {
+    return cv?.sections?.volunteer || [];
+  }, [cv]);
+
   return (
     <div style={{ height: '100%', width: '100%', overflow: 'auto' }}>
       <div>
@@ -214,6 +218,24 @@ export function BrutalistTheme() {
                 <p>
                   <em>{item.summary}</em> — {item.location} ({item.date})
                 </p>
+              </div>
+            ))}
+          </>
+        )}
+
+        {volunteerItems.length > 0 && (
+          <>
+            <h2>Volunteer</h2>
+            {volunteerItems.map((vol, idx) => (
+              <div key={`vol-${idx}`}>
+                <h3>
+                  {vol.position || vol.title}
+                  {isPresent(vol.end_date) && <> (Current)</>}
+                </h3>
+                <p>
+                  <em>{vol.organization}</em> — {formatDate(vol.start_date)} to {formatDate(vol.end_date)}
+                </p>
+                {vol.summary && <p>{vol.summary}</p>}
               </div>
             ))}
           </>

@@ -17,6 +17,7 @@ export function PacoTheme({ darkMode }) {
     socialLinks,
     projects,
     experience,
+    education,
     sectionsRaw,
   } = cv;
 
@@ -25,6 +26,7 @@ export function PacoTheme({ darkMode }) {
   const presentations = (sectionsRaw?.presentations || []).filter(e => !Array.isArray(e?.tags) || !e.tags.includes('archived'));
   const publications = (sectionsRaw?.publications || []).filter(e => !Array.isArray(e?.tags) || !e.tags.includes('archived'));
   const professionalDevelopment = (sectionsRaw?.professional_development || []).filter(e => !Array.isArray(e?.tags) || !e.tags.includes('archived'));
+  const volunteerItems = (sectionsRaw?.volunteer || []).filter(e => !Array.isArray(e?.tags) || !e.tags.includes('archived'));
 
   // Get active projects (limit to 4)
   const activeProjects = projects?.slice(0, 4) || [];
@@ -224,6 +226,63 @@ export function PacoTheme({ darkMode }) {
                       </ItemHeader>
                       {pub.journal && (
                         <ItemDescription $darkMode={darkMode}>{pub.journal}</ItemDescription>
+                      )}
+                    </ListItem>
+                  ))}
+                </ColumnList>
+              </Column>
+            )}
+
+            {/* Education Column */}
+            {education && education.length > 0 && (
+              <Column style={{ '--stagger': 7 }}>
+                <ColumnHeader $darkMode={darkMode}>Education</ColumnHeader>
+                <ColumnList>
+                  {education.slice(0, 4).map((edu, idx) => (
+                    <ListItem key={`edu-${idx}`} $darkMode={darkMode}>
+                      <ItemHeader>
+                        <ItemText $darkMode={darkMode}>{edu.institution}</ItemText>
+                      </ItemHeader>
+                      <ItemDescription $darkMode={darkMode}>
+                        {edu.degree}{edu.area ? ` in ${edu.area}` : ''}
+                      </ItemDescription>
+                    </ListItem>
+                  ))}
+                </ColumnList>
+              </Column>
+            )}
+
+            {/* Volunteer Column */}
+            {volunteerItems.length > 0 && (
+              <Column style={{ '--stagger': 8 }}>
+                <ColumnHeader $darkMode={darkMode}>Volunteer</ColumnHeader>
+                <ColumnList>
+                  {volunteerItems.slice(0, 4).map((vol, idx) => (
+                    <ListItem key={`vol-${idx}`} $darkMode={darkMode}>
+                      <ItemHeader>
+                        <ItemText $darkMode={darkMode}>{vol.organization}</ItemText>
+                      </ItemHeader>
+                      <ItemDescription $darkMode={darkMode}>
+                        {vol.position || vol.title}
+                      </ItemDescription>
+                    </ListItem>
+                  ))}
+                </ColumnList>
+              </Column>
+            )}
+
+            {/* Professional Development Column */}
+            {professionalDevelopment.length > 0 && (
+              <Column style={{ '--stagger': 9 }}>
+                <ColumnHeader $darkMode={darkMode}>Prof. Development</ColumnHeader>
+                <ColumnList>
+                  {professionalDevelopment.slice(0, 4).map((item, idx) => (
+                    <ListItem key={`pd-${idx}`} $darkMode={darkMode}>
+                      <ItemHeader>
+                        <ItemText $darkMode={darkMode}>{item.name}</ItemText>
+                      </ItemHeader>
+                      {item.location && (
+                        <ItemDescription $darkMode={darkMode}>{item.location}</ItemDescription>
                       )}
                     </ListItem>
                   ))}

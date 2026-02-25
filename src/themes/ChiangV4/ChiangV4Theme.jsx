@@ -95,6 +95,15 @@ export function ChiangV4Theme() {
   const professionalDevItems = useMemo(() => {
     return cv?.sections?.professional_development || [];
   }, [cv]);
+
+  const educationItems = useMemo(() => {
+    return cv?.sections?.education || [];
+  }, [cv]);
+
+  const volunteerItems = useMemo(() => {
+    return cv?.sections?.volunteer || [];
+  }, [cv]);
+
   const githubUrl = pickSocialUrl(socials, ['github']);
   const linkedinUrl = pickSocialUrl(socials, ['linkedin']);
   const twitterUrl = pickSocialUrl(socials, ['twitter', 'x']);
@@ -214,9 +223,50 @@ export function ChiangV4Theme() {
           </ContactContent>
         </Section>
 
+        {educationItems.length > 0 && (
+          <Section id="education">
+            <SectionTitle><SectionNumber>05.</SectionNumber> Education</SectionTitle>
+            <ExperienceList>
+              {educationItems.map((edu, idx) => (
+                <ExperienceItem key={`edu-${idx}`}>
+                  <ExperienceHeader>
+                    <ExperienceTitle>
+                      {edu.degree} in {edu.area} <ExperienceCompany>@ {edu.institution}</ExperienceCompany>
+                    </ExperienceTitle>
+                    <ExperienceDate>{formatDateRange(edu.start_date, edu.end_date)}</ExperienceDate>
+                  </ExperienceHeader>
+                </ExperienceItem>
+              ))}
+            </ExperienceList>
+          </Section>
+        )}
+
+        {volunteerItems.length > 0 && (
+          <Section id="volunteer">
+            <SectionTitle><SectionNumber>06.</SectionNumber> Volunteer</SectionTitle>
+            <ExperienceList>
+              {volunteerItems.map((vol, idx) => (
+                <ExperienceItem key={`vol-${idx}`}>
+                  <ExperienceHeader>
+                    <ExperienceTitle>
+                      {vol.position || vol.title} <ExperienceCompany>@ {vol.organization}</ExperienceCompany>
+                    </ExperienceTitle>
+                    <ExperienceDate>{formatDateRange(vol.start_date, vol.end_date)}</ExperienceDate>
+                  </ExperienceHeader>
+                  {vol.summary && (
+                    <ExperienceHighlights>
+                      <li>{vol.summary}</li>
+                    </ExperienceHighlights>
+                  )}
+                </ExperienceItem>
+              ))}
+            </ExperienceList>
+          </Section>
+        )}
+
         {awardItems.length > 0 && (
           <Section id="awards">
-            <SectionTitle><SectionNumber>05.</SectionNumber> Awards & Recognition</SectionTitle>
+            <SectionTitle><SectionNumber>07.</SectionNumber> Awards & Recognition</SectionTitle>
             <ExperienceList>
               {awardItems.map((award, idx) => (
                 <ExperienceItem key={`award-${idx}`}>
@@ -237,7 +287,7 @@ export function ChiangV4Theme() {
 
         {presentationItems.length > 0 && (
           <Section id="presentations">
-            <SectionTitle><SectionNumber>06.</SectionNumber> Presentations</SectionTitle>
+            <SectionTitle><SectionNumber>08.</SectionNumber> Presentations</SectionTitle>
             <ExperienceList>
               {presentationItems.map((pres, idx) => (
                 <ExperienceItem key={`pres-${idx}`}>
@@ -259,7 +309,7 @@ export function ChiangV4Theme() {
 
         {publicationItems.length > 0 && (
           <Section id="publications">
-            <SectionTitle><SectionNumber>07.</SectionNumber> Publications</SectionTitle>
+            <SectionTitle><SectionNumber>09.</SectionNumber> Publications</SectionTitle>
             <ProjectsGrid>
               {publicationItems.map((pub, idx) => (
                 <ProjectCard key={`pub-${idx}`}>
@@ -281,7 +331,7 @@ export function ChiangV4Theme() {
 
         {professionalDevItems.length > 0 && (
           <Section id="professional-development">
-            <SectionTitle><SectionNumber>08.</SectionNumber> Professional Development</SectionTitle>
+            <SectionTitle><SectionNumber>10.</SectionNumber> Professional Development</SectionTitle>
             <ExperienceList>
               {professionalDevItems.map((item, idx) => (
                 <ExperienceItem key={`profdev-${idx}`}>

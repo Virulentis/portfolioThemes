@@ -76,6 +76,7 @@ const NAV_ITEMS = [
   { id: 'experience', label: 'Experience' },
   { id: 'projects', label: 'Projects' },
   { id: 'education', label: 'Education' },
+  { id: 'volunteer', label: 'Volunteer' },
   { id: 'awards', label: 'Awards' },
   { id: 'presentations', label: 'Presentations' },
   { id: 'publications', label: 'Publications' },
@@ -128,12 +129,17 @@ export function HendoTheme() {
     return (cv?.sections?.professional_development || []).filter(e => !isArchived(e));
   }, [cv]);
 
+  const volunteerItems = useMemo(() => {
+    return (cv?.sections?.volunteer || []).filter(e => !isArchived(e));
+  }, [cv]);
+
   // Filter nav items based on available content
   const visibleNavItems = NAV_ITEMS.filter(item => {
     if (item.id === 'about') return true;
     if (item.id === 'experience') return experienceItems.length > 0;
     if (item.id === 'projects') return projectItems.length > 0;
     if (item.id === 'education') return educationItems.length > 0;
+    if (item.id === 'volunteer') return volunteerItems.length > 0;
     if (item.id === 'awards') return awardItems.length > 0;
     if (item.id === 'presentations') return presentationItems.length > 0;
     if (item.id === 'publications') return publicationItems.length > 0;
@@ -197,6 +203,24 @@ export function HendoTheme() {
                     <ItemMeta>{edu.end_date || edu.start_date}</ItemMeta>
                   </ItemRow>
                   <ItemDesc>{edu.institution}</ItemDesc>
+                </DividedItem>
+              ))}
+            </DividedList>
+          </ContentArea>
+        );
+
+      case 'volunteer':
+        return (
+          <ContentArea>
+            <PageHeader>Volunteer</PageHeader>
+            <DividedList>
+              {volunteerItems.map((vol, idx) => (
+                <DividedItem key={`vol-${idx}`}>
+                  <ItemRow>
+                    <ItemTitle>{vol.position || vol.title} at {vol.organization}</ItemTitle>
+                    <ItemMeta>{vol.start_date} - {vol.end_date || 'Present'}</ItemMeta>
+                  </ItemRow>
+                  {vol.summary && <ItemDesc>{vol.summary}</ItemDesc>}
                 </DividedItem>
               ))}
             </DividedList>
