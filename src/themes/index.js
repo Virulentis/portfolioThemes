@@ -12,8 +12,10 @@ import { GerhardTheme } from './Gerhard/GerhardTheme';
 import { AlanaGoyalTheme } from './AlanaGoyal/AlanaGoyalTheme';
 import { AmirmxtTheme } from './Amirmxt/AmirmxtTheme';
 import { FelixDornerTheme } from './FelixDorner/FelixDornerTheme';
+import { JamiePatesTheme } from './JamiePates/JamiePatesTheme';
 import { TerminalTheme } from './Terminal/TerminalTheme';
 import { StammyTheme } from './Stammy/StammyTheme';
+import { StefanFiskTheme } from './StefanFisk/StefanFiskTheme';
 import { StefanZweifelTheme } from './StefanZweifel/StefanZweifelTheme';
 import { DmythroTheme } from './Dmythro/DmythroTheme';
 import { DTCTheme } from './DTC/DTCTheme';
@@ -147,12 +149,28 @@ export const PORTFOLIO_THEMES = [
     Component: TerminalTheme,
   },
   {
+    id: 'jamie-pates',
+    slug: 'sandbox-save',
+    name: 'Sandbox Save',
+    description: 'PS1-inspired interface with FF7-style panels, tabbed file views, and a game UI treatment driven by CV.yaml data.',
+    source: 'https://www.jamiepates.com',
+    Component: JamiePatesTheme,
+  },
+  {
     id: 'stammy',
     slug: 'stammy',
     name: 'Stammy',
     description: 'Dark olive theme with left icon sidebar, serif typography, and table-style work history.',
     source: 'https://paulstamatiou.com',
     Component: StammyTheme,
+  },
+  {
+    id: 'stefan-fisk',
+    slug: 'business-card',
+    name: 'Business Card',
+    description: 'Ultra-minimal centered contact page with classic serif typography and simple hover-underlined links.',
+    source: 'https://stefanfisk.com',
+    Component: StefanFiskTheme,
   },
   {
     id: 'stefan-zweifel',
