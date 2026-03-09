@@ -1,25 +1,124 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import styled, { createGlobalStyle, css, keyframes } from 'styled-components';
 import { useCV } from '../../contexts/ConfigContext';
+import { ShadowRoot } from '../../ui/ShadowRoot';
 import { formatDateRange, formatMonthYear } from '../../utils/cvHelpers';
 
-const PAGE_LABELS = {
-  home: 'Homepage',
-  projects: 'Projects',
-  skills: 'Skills',
-  history: 'History',
-  config: 'Config',
-};
+import rawStyles from './jamiePates.css?raw';
 
-const MENU_ITEMS = [
-  { id: 'home', label: 'Home' },
-  { id: 'projects', label: 'Projects' },
-  { id: 'skills', label: 'Skills' },
-  { id: 'history', label: 'History' },
-  { id: 'config', label: 'Config' },
-];
+const EXTRA_CSS = `
+:host {
+  display: block;
+  width: 100%;
+  background: #000;
+}
 
-const DEFAULT_WINDOW_COLORS = {
+.jamie-host {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.jamie-root {
+  position: relative;
+}
+
+.jp-button-reset,
+.jp-link-reset {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-decoration: none;
+}
+
+.jp-button-reset {
+  width: 100%;
+  text-align: left;
+}
+
+.jp-button-reset:disabled {
+  cursor: default;
+}
+
+.jp-placeholder-portrait {
+  width: 145px;
+  height: 180px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.35), transparent 18%),
+    linear-gradient(180deg, rgba(98, 156, 255, 0.4), rgba(21, 31, 74, 0.96)),
+    linear-gradient(135deg, rgba(166, 196, 255, 0.15), transparent 50%);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.16);
+  font-size: 54px;
+  letter-spacing: 0.08em;
+}
+
+.jp-project-icon {
+  width: 36px;
+  height: 36px;
+  margin-right: .75rem;
+  object-fit: contain;
+}
+
+.jp-history-thumb {
+  width: 7rem;
+  height: 11.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background:
+    radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.22), transparent 18%),
+    linear-gradient(180deg, rgba(98, 156, 255, 0.4), rgba(21, 31, 74, 0.96));
+  font-size: 2rem;
+}
+
+.jp-history-link,
+.jp-history-button {
+  color: inherit;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  display: block;
+  text-align: left;
+}
+
+.jp-empty-save {
+  opacity: .7;
+}
+
+.jp-inline-gap {
+  gap: .5rem;
+}
+
+.jp-stack-gap {
+  gap: .75rem;
+}
+`;
+
+const THEME_STYLE_TEXT = rawStyles
+  .replaceAll('url(/', 'url(/jamie-pates/')
+  .replaceAll('body.crt-effect #root:before', '.jamie-host.crt-effect .jamie-root:before')
+  .replaceAll('body.crt-effect *', '.jamie-host.crt-effect *')
+  .replaceAll('body.crt-effect:after', '.jamie-host.crt-effect:after')
+  .replaceAll('body.crt-effect', '.jamie-host.crt-effect')
+  .replaceAll('body *', '.jamie-host *')
+  .replaceAll('body{', '.jamie-host{')
+  .replaceAll('#root{', '.jamie-root{')
+  + EXTRA_CSS;
+
+const DEFAULT_WINDOW_COLOR = {
   topLeft: [2, 34, 186],
   topRight: [2, 24, 145],
   bottomLeft: [0, 15, 105],
@@ -27,183 +126,166 @@ const DEFAULT_WINDOW_COLORS = {
 };
 
 const COLOR_KEYS = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
-const MATERIA_COLORS = ['green', 'blue', 'yellow', 'pink', 'red'];
+const MENU_ORDER = ['projects', 'skills', 'history', 'config'];
+const PAGE_TITLES = {
+  home: 'Homepage',
+  projects: 'Projects',
+  skills: 'Skills',
+  history: 'History',
+  config: 'Config',
+};
 
 const AUDIO_FILES = {
   back: 'back.mp3',
+  delete: 'delete.mp3',
   error: 'error.mp3',
   heal: 'heal.mp3',
+  materia: 'materia.mp3',
   save: 'save.mp3',
   saveSelect: 'saveSelect.mp3',
   select: 'select.mp3',
   slash: 'slash.mp3',
 };
 
-const GlobalStyle = createGlobalStyle`
-  @font-face {
-    font-family: 'Departure Mono';
-    src: url('/fonts/DepartureMono-Regular.woff') format('woff');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
+function readJsonStorage(key, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? JSON.parse(value) : fallback;
+  } catch {
+    return fallback;
   }
-
-  body.crt-effect::before,
-  body.crt-effect::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 999;
-  }
-
-  body.crt-effect::before {
-    opacity: 0.14;
-    background:
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 4px),
-      linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 255, 0.02));
-  }
-
-  body.crt-effect::after {
-    opacity: 0.08;
-    animation: crtFlicker 140ms steps(2) infinite;
-    background: rgba(255, 255, 255, 0.04);
-  }
-
-  @keyframes crtFlicker {
-    0%,
-    100% {
-      opacity: 0.06;
-    }
-
-    50% {
-      opacity: 0.11;
-    }
-  }
-`;
-
-function splitDetails(details = '') {
-  return details
-    .split(/[;,]/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
-function parseProjectTechnologies(project = {}) {
-  const source = (project.highlights || []).find((item) => /^technologies\s*-/i.test(item || ''));
-  if (!source) return [];
-  return source
-    .replace(/^technologies\s*-\s*/i, '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
+function isPresent(value) {
+  return String(value || '').trim().toLowerCase() === 'present';
 }
 
-function wrapLines(text = '', width = 38) {
+function getInitials(name = '') {
+  const parts = String(name).split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'CV';
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+}
+
+function wrapText(text = '', maxLength = 38, limit = 6) {
   const words = String(text || '').replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
-  if (words.length === 0) return [];
+  if (!words.length) return [];
 
   const lines = [];
   let current = '';
 
   for (const word of words) {
     const candidate = current ? `${current} ${word}` : word;
-    if (candidate.length > width) {
+    if (candidate.length > maxLength && current) {
       lines.push(current);
       current = word;
+      if (lines.length >= limit) break;
     } else {
       current = candidate;
     }
   }
 
-  if (current) lines.push(current);
+  if (current && lines.length < limit) lines.push(current);
   return lines;
 }
 
-function getSummary(cv) {
-  if (cv.about) return cv.about;
-  if (cv.currentJobTitle && cv.location) {
-    return `I'm a ${cv.currentJobTitle} based in ${cv.location}. Welcome to this personal sandbox built around live CV data with a PS1 interface treatment.`;
-  }
-  if (cv.currentJobTitle) {
-    return `I'm a ${cv.currentJobTitle}. Welcome to this personal sandbox built around live CV data with a PS1 interface treatment.`;
-  }
-  return 'Welcome to this personal sandbox. Profile, projects, skills, and archive data are all pulled from CV.yaml.';
+function splitDetails(details = '') {
+  return String(details)
+    .split(/[;,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
-function getInitials(name = '') {
-  const parts = name.split(/\s+/).filter(Boolean);
-  if (!parts.length) return 'CV';
-  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+function parseProjectTech(project) {
+  const techLine = (project?.highlights || []).find((item) => /^technologies\s*-/i.test(item || ''));
+  if (!techLine) return [];
+  return techLine
+    .replace(/^technologies\s*-\s*/i, '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildSummary(cv) {
+  if (cv.about) return cv.about;
+  if (cv.currentJobTitle && cv.location) {
+    return `I'm a ${cv.currentJobTitle} based in ${cv.location}. Welcome to this personal sandbox. I plan to load an ever-growing collection of profile data here, built with PS1 aesthetics in mind.`;
+  }
+  return 'Welcome to this personal sandbox. Profile, projects, skills, history, and configuration are loaded from CV.yaml.';
+}
+
+function buildWindowStyle(windowColor) {
+  return {
+    backgroundImage: `linear-gradient(135deg, rgb(${windowColor.topLeft.join(',')}) 0%, transparent 50%, rgb(${windowColor.bottomRight.join(',')}) 100%), linear-gradient(45deg, rgb(${windowColor.bottomLeft.join(',')}) 0%, rgb(${windowColor.topRight.join(',')}) 100%)`,
+  };
 }
 
 function getLevel(cv) {
-  const experience = (cv.experience || []).length;
-  const projects = (cv.projects || []).length;
-  const awards = (cv.awards || []).length;
-  const education = (cv.education || []).length;
-  return Math.min(99, 8 + experience * 4 + projects * 3 + awards * 2 + education);
+  return Math.min(
+    99,
+    15 +
+      (cv.experience || []).length * 4 +
+      (cv.projects || []).length * 3 +
+      (cv.awards || []).length * 2
+  );
+}
+
+function getMaxHealth(cv) {
+  return 900 + (cv.experience || []).length * 110 + (cv.projects || []).length * 45;
+}
+
+function getMaxMana(cv, skills) {
+  return 240 + skills.length * 22 + (cv.awards || []).length * 14;
 }
 
 function getGil(cv) {
   return (
-    12000 +
+    20000 +
     (cv.projects || []).length * 3400 +
-    (cv.awards || []).length * 1800 +
-    (cv.publications || []).length * 2200
+    (cv.awards || []).length * 2600 +
+    (cv.publications || []).length * 1800
   );
 }
 
-function getWindowStyle(colors) {
-  return {
-    backgroundImage: `
-      linear-gradient(135deg, rgb(${colors.topLeft.join(',')}) 0%, transparent 50%, rgb(${colors.bottomRight.join(',')}) 100%),
-      linear-gradient(45deg, rgb(${colors.bottomLeft.join(',')}) 0%, rgb(${colors.topRight.join(',')}) 100%)
-    `,
-  };
-}
-
 function buildSkills(cv) {
-  const skillEntries = [];
+  const records = [];
 
-  for (const item of cv.sectionsRaw?.certifications_skills || []) {
-    const parts = splitDetails(item.details);
-    for (const part of parts) {
-      skillEntries.push({
-        name: part,
-        description: /cert/i.test(item.label || '')
-          ? 'Loaded from certification inventory.'
-          : 'Loaded from profile skill inventory.',
+  for (const section of cv.sectionsRaw?.certifications_skills || []) {
+    for (const item of splitDetails(section.details)) {
+      records.push({
+        name: item,
+        description: /cert/i.test(section.label || '')
+          ? 'Certification file linked to the profile.'
+          : 'Primary skill loaded from the CV inventory.',
       });
     }
   }
 
   for (const project of cv.projects || []) {
-    const technologies = parseProjectTechnologies(project);
-    for (const technology of technologies) {
-      skillEntries.push({
-        name: technology,
+    for (const tech of parseProjectTech(project)) {
+      records.push({
+        name: tech,
         description: `Observed in project file: ${project.name}.`,
       });
     }
   }
 
-  const unique = [];
+  const colors = ['blue', 'yellow', 'green', 'pink', 'red'];
+  const deduped = [];
   const seen = new Set();
 
-  for (const item of skillEntries) {
+  for (const item of records) {
     const key = item.name.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    unique.push(item);
+    deduped.push(item);
   }
 
-  return unique.slice(0, 12).map((item, index) => ({
+  return deduped.slice(0, 12).map((item, index) => ({
     id: item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     name: item.name,
     description: item.description,
+    color: colors[index % colors.length],
     score: (index % 5) + 1,
-    color: MATERIA_COLORS[index % MATERIA_COLORS.length],
   }));
 }
 
@@ -214,20 +296,7 @@ function buildHistoryRecords(cv, mode) {
       name: item.institution,
       role: item.degree || item.area || 'Education',
       year: formatDateRange(item.start_date || item.startDate, item.end_date || item.endDate),
-      summary: item.highlights?.[0] || item.area || item.degree || '',
-      detail: item.location || '',
-      link: item.url || null,
-    }));
-  }
-
-  if (mode === 'awards') {
-    return (cv.awards || []).map((item, index) => ({
-      id: `award-${index}`,
-      name: item.name,
-      role: item.summary || 'Award',
-      year: formatMonthYear(item.date),
-      summary: item.highlights?.[0] || item.summary || '',
-      detail: item.location || '',
+      summary: item.highlights?.[0] || item.area || '',
       link: item.url || null,
     }));
   }
@@ -238,20 +307,19 @@ function buildHistoryRecords(cv, mode) {
     role: item.position || item.positions?.[0]?.title || 'Role',
     year: formatDateRange(
       item.start_date || item.positions?.[0]?.start_date,
-      item.end_date || item.positions?.[item.positions.length - 1]?.end_date
+      item.end_date || item.positions?.[item.positions?.length - 1]?.end_date
     ),
     summary:
       item.highlights?.[0] ||
       item.positions?.[0]?.highlights?.[0] ||
       item.location ||
       '',
-    detail: item.location || '',
     link: item.url || null,
   }));
 }
 
-function colorToCss(rgb) {
-  return `rgb(${rgb.join(',')})`;
+function getProjectIcon(index) {
+  return index % 2 === 0 ? '/jamie-pates/xpicon.png' : '/jamie-pates/cardicon.png';
 }
 
 function formatClock(totalSeconds) {
@@ -261,81 +329,105 @@ function formatClock(totalSeconds) {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-function openExternal(url) {
-  if (!url) return;
-  window.open(url, '_blank', 'noopener,noreferrer');
+function GlyphText({ text, color = 'white', className = '', resource = false }) {
+  if (!text) return null;
+
+  return (
+    <span className={`font flex ${className}`.trim()} data-text-color={color} data-label={resource ? 'resourceValue' : undefined}>
+      {Array.from(String(text)).map((glyph, index) => (
+        <span key={`${glyph}-${index}`} className="font-glyph" data-sprite={glyph}>
+          {glyph}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function GlyphToken({ sprite, className = '' }) {
+  return (
+    <span className={`font-glyph ${className}`.trim()} data-sprite={sprite}>
+      {sprite}
+    </span>
+  );
+}
+
+function WindowBox({ label, className = '', style, children, ...props }) {
+  return (
+    <div className={`_contentBox_1iaa9_1 ${className}`.trim()} data-label={label} style={style} {...props}>
+      {children}
+    </div>
+  );
 }
 
 export function JamiePatesTheme() {
   const cv = useCV();
   const [page, setPage] = useState('home');
-  const [selectedProject, setSelectedProject] = useState(0);
-  const [hoverProject, setHoverProject] = useState(0);
-  const [selectedSkill, setSelectedSkill] = useState(0);
-  const [historyMode, setHistoryMode] = useState('experience');
+  const [soundEnabled, setSoundEnabled] = useState(() => readJsonStorage('jamie-pates-sound', true));
+  const [crtEnabled, setCrtEnabled] = useState(() => readJsonStorage('jamie-pates-crt', true));
+  const [windowColor, setWindowColor] = useState(() => readJsonStorage('jamie-pates-windowColor', DEFAULT_WINDOW_COLOR));
+  const [seconds, setSeconds] = useState(() => readJsonStorage('jamie-pates-seconds', 648));
+  const [scale, setScale] = useState(1);
+  const [hoverProjectIndex, setHoverProjectIndex] = useState(0);
+  const [selectedSkillId, setSelectedSkillId] = useState(null);
+  const [selectedColorSlot, setSelectedColorSlot] = useState(null);
   const [historyPhase, setHistoryPhase] = useState('select');
+  const [historyMode, setHistoryMode] = useState('experience');
   const [historyProgress, setHistoryProgress] = useState(0);
-  const [seconds, setSeconds] = useState(184);
-  const [viewportScale, setViewportScale] = useState(1);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [crtEnabled, setCrtEnabled] = useState(true);
-  const [windowColors, setWindowColors] = useState(DEFAULT_WINDOW_COLORS);
-  const [activeColorSlot, setActiveColorSlot] = useState('topLeft');
-  const [configHint, setConfigHint] = useState('Tune the interface options.');
-  const [booted, setBooted] = useState(false);
-  const [currentHealth, setCurrentHealth] = useState(null);
-  const [currentMana, setCurrentMana] = useState(null);
-  const [damageText, setDamageText] = useState(null);
   const [portraitShake, setPortraitShake] = useState(false);
+  const [portraitDying, setPortraitDying] = useState(false);
+  const [damageValue, setDamageValue] = useState(null);
 
-  const summary = useMemo(() => getSummary(cv || {}), [cv]);
-  const summaryLines = useMemo(() => wrapLines(summary, 38).slice(0, 6), [summary]);
-  const projectLines = useMemo(() => wrapLines((cv?.projects || [])[hoverProject]?.summary || '', 28).slice(0, 6), [cv, hoverProject]);
+  const summaryLines = useMemo(() => wrapText(buildSummary(cv || {}), 38, 6), [cv]);
   const skills = useMemo(() => buildSkills(cv || {}), [cv]);
+  const selectedSkill = useMemo(() => {
+    if (!skills.length) return null;
+    return skills.find((item) => item.id === selectedSkillId) || skills[0];
+  }, [skills, selectedSkillId]);
   const historyRecords = useMemo(() => buildHistoryRecords(cv || {}, historyMode), [cv, historyMode]);
-  const windowStyle = useMemo(() => getWindowStyle(windowColors), [windowColors]);
+  const windowStyle = useMemo(() => buildWindowStyle(windowColor), [windowColor]);
 
-  const maxHealth = useMemo(() => {
-    if (!cv) return 1200;
-    return 800 + (cv.experience || []).length * 140 + (cv.projects || []).length * 55;
-  }, [cv]);
+  const projects = cv?.projects || [];
+  const hoverProject = projects[hoverProjectIndex] || projects[0] || null;
+  const hoverProjectLines = useMemo(
+    () => wrapText(hoverProject?.summary || 'Open a project file to inspect the mission data.', 28, 6),
+    [hoverProject]
+  );
 
-  const maxMana = useMemo(() => 300 + skills.length * 28 + (cv?.awards || []).length * 18, [cv, skills]);
   const level = useMemo(() => getLevel(cv || {}), [cv]);
+  const maxHealth = useMemo(() => getMaxHealth(cv || {}), [cv]);
+  const maxMana = useMemo(() => getMaxMana(cv || {}, skills), [cv, skills]);
+  const [currentHealth, setCurrentHealth] = useState(maxHealth);
+  const [currentMana, setCurrentMana] = useState(maxMana);
   const gil = useMemo(() => getGil(cv || {}), [cv]);
-  const nextLevelProgress = useMemo(() => Math.min(100, 16 + ((cv?.projects || []).length * 11 + skills.length * 4) % 84), [cv, skills]);
-  const limitProgress = useMemo(() => Math.min(100, 35 + (cv?.awards || []).length * 12), [cv]);
-
-  const quickLinks = useMemo(() => {
+  const nextLevelProgress = useMemo(() => ((level * 7) % 100) || 2, [level]);
+  const limitLevel = useMemo(() => Math.max(1, Math.min(4, 1 + Math.floor(((cv?.awards || []).length + (cv?.projects || []).length) / 3))), [cv]);
+  const menuLinks = useMemo(() => {
     if (!cv) return [];
     return [
-      cv.website ? { label: 'Website', value: cv.website.replace(/^https?:\/\//, ''), href: cv.website } : null,
-      cv.socialLinks?.github ? { label: 'GitHub', value: 'Open profile', href: cv.socialLinks.github } : null,
-      cv.socialLinks?.linkedin ? { label: 'LinkedIn', value: 'Open profile', href: cv.socialLinks.linkedin } : null,
-      cv.email ? { label: 'Mail', value: cv.email, href: `mailto:${cv.email}` } : null,
+      cv.website ? { id: 'website', label: 'Website', href: cv.website } : null,
+      cv.socialLinks?.github ? { id: 'github', label: 'Github', href: cv.socialLinks.github } : null,
+      cv.socialLinks?.linkedin ? { id: 'linkedin', label: 'LinkedIn', href: cv.socialLinks.linkedin } : null,
     ].filter(Boolean);
   }, [cv]);
 
-  const projectItems = cv?.projects || [];
-  const hoveredProjectItem = projectItems[hoverProject] || projectItems[0] || null;
-  const activeSkill = skills[selectedSkill] || skills[0] || null;
-
-  function playSound(name) {
-    const file = AUDIO_FILES[name];
-    if (!file || !soundEnabled) return;
-    const audio = new Audio(`/jamie-pates/audio/${file}`);
-    audio.volume = 0.2;
-    audio.play().catch(() => {});
-  }
+  useEffect(() => {
+    setCurrentHealth(maxHealth);
+  }, [maxHealth]);
 
   useEffect(() => {
-    setBooted(true);
-  }, []);
+    setCurrentMana(maxMana);
+  }, [maxMana]);
+
+  useEffect(() => {
+    if (skills.length && !selectedSkillId) {
+      setSelectedSkillId(skills[0].id);
+    }
+  }, [skills, selectedSkillId]);
 
   useEffect(() => {
     function updateScale() {
-      const scale = Math.min(window.innerWidth / 1250, window.innerHeight / 975);
-      setViewportScale(scale);
+      const nextScale = Math.min(window.innerWidth / 1250, window.innerHeight / 975);
+      setScale(nextScale);
     }
 
     updateScale();
@@ -353,29 +445,26 @@ export function JamiePatesTheme() {
   }, []);
 
   useEffect(() => {
-    document.body.classList.toggle('crt-effect', crtEnabled);
-    return () => document.body.classList.remove('crt-effect');
-  }, [crtEnabled]);
-
-  useEffect(() => {
     const timer = window.setInterval(() => {
-      setSeconds((value) => (value >= 35999 ? 0 : value + 1));
+      setSeconds((value) => {
+        const next = value >= 35999 ? 0 : value + 1;
+        try {
+          localStorage.setItem('jamie-pates-seconds', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
     }, 1000);
 
     return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    setCurrentHealth(maxHealth);
-  }, [maxHealth]);
-
-  useEffect(() => {
-    setCurrentMana(maxMana);
-  }, [maxMana]);
-
-  useEffect(() => {
-    setHoverProject(selectedProject);
-  }, [selectedProject]);
+    try {
+      localStorage.setItem('jamie-pates-sound', JSON.stringify(soundEnabled));
+      localStorage.setItem('jamie-pates-crt', JSON.stringify(crtEnabled));
+      localStorage.setItem('jamie-pates-windowColor', JSON.stringify(windowColor));
+    } catch {}
+  }, [soundEnabled, crtEnabled, windowColor]);
 
   useEffect(() => {
     if (historyPhase !== 'loading') return undefined;
@@ -385,7 +474,7 @@ export function JamiePatesTheme() {
         const next = value + 10;
         if (next >= 100) {
           playSound('save');
-          window.setTimeout(() => setHistoryPhase('loaded'), 90);
+          window.setTimeout(() => setHistoryPhase('loaded'), 100);
           return 110;
         }
         return next;
@@ -393,12 +482,20 @@ export function JamiePatesTheme() {
     }, 80);
 
     return () => window.clearInterval(timer);
-  }, [historyPhase]);
+  }, [historyPhase, soundEnabled]);
 
   if (!cv) return null;
 
-  function changePage(nextPage) {
-    if (nextPage === page) return;
+  function playSound(type) {
+    const file = AUDIO_FILES[type];
+    if (!soundEnabled || !file) return;
+    const audio = new Audio(`/jamie-pates/audio/${file}`);
+    audio.volume = 0.2;
+    audio.play().catch(() => {});
+  }
+
+  function handleMenuClick(nextPage) {
+    if (page === nextPage) return;
     playSound(nextPage === 'home' ? 'back' : 'select');
     setPage(nextPage);
     if (nextPage !== 'history') {
@@ -407,1414 +504,670 @@ export function JamiePatesTheme() {
     }
   }
 
-  function startHistory(mode) {
-    playSound('select');
-    setHistoryMode(mode);
-    setHistoryProgress(0);
-    setHistoryPhase('loading');
+  function handleExternalClick(url) {
+    if (!url) {
+      playSound('error');
+      return;
+    }
+    playSound('saveSelect');
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 
-  function updateColor(slot, channel, value) {
-    setWindowColors((current) => ({
+  function handlePortraitClick() {
+    if (currentHealth === 0) {
+      if (currentMana < 34) {
+        playSound('error');
+        return;
+      }
+      playSound('heal');
+      setCurrentHealth(maxHealth);
+      setCurrentMana((value) => Math.max(0, value - 34));
+      setPortraitDying(false);
+      setDamageValue('REVIVE');
+      window.setTimeout(() => setDamageValue(null), 700);
+      return;
+    }
+
+    const damage = Math.floor(Math.random() * 21) + 130;
+    playSound('slash');
+    setPortraitShake(true);
+    setDamageValue(String(damage));
+    setCurrentHealth((value) => {
+      const next = Math.max(0, value - damage);
+      if (next === 0) {
+        setPortraitDying(true);
+      }
+      return next;
+    });
+    window.setTimeout(() => setPortraitShake(false), 300);
+    window.setTimeout(() => setDamageValue(null), 420);
+    if (currentHealth - damage <= 0) {
+      window.setTimeout(() => setPortraitDying(false), 1000);
+    }
+  }
+
+  function setHistory(type) {
+    playSound('select');
+    setHistoryMode(type);
+    setHistoryPhase('loading');
+    setHistoryProgress(0);
+  }
+
+  function resetWindowColor() {
+    playSound('select');
+    setWindowColor(DEFAULT_WINDOW_COLOR);
+  }
+
+  function updateColor(channelIndex, value) {
+    if (!selectedColorSlot) return;
+    playSound('select');
+    setWindowColor((current) => ({
       ...current,
-      [slot]: current[slot].map((component, index) => (
-        index === channel ? Number(value) : component
+      [selectedColorSlot]: current[selectedColorSlot].map((component, index) => (
+        index === channelIndex ? Number(value) : component
       )),
     }));
   }
 
-  function handlePortraitAction() {
-    if (!currentHealth && currentHealth !== 0) return;
+  function renderMenuItem(id, label) {
+    const active = page === id;
 
-    if (currentHealth === 0) {
-      if ((currentMana || 0) < 34) {
-        playSound('error');
-        return;
-      }
-
-      playSound('heal');
-      setCurrentHealth(maxHealth);
-      setCurrentMana((value) => Math.max(0, (value || 0) - 34));
-      setDamageText('REVIVE');
-      window.setTimeout(() => setDamageText(null), 850);
-      return;
+    if (active) {
+      return (
+        <button type="button" className="jp-button-reset _active_l1p5s_8 w-100" disabled>
+          <span>{GlyphText({ text: label })}</span>
+        </button>
+      );
     }
 
-    const damage = Math.floor(Math.random() * 80) + 40;
-    playSound('slash');
-    setPortraitShake(true);
-    setCurrentHealth((value) => Math.max(0, (value || maxHealth) - damage));
-    setDamageText(`-${damage}`);
-    window.setTimeout(() => setPortraitShake(false), 260);
-    window.setTimeout(() => setDamageText(null), 800);
+    return (
+      <button
+        type="button"
+        className="jp-button-reset w-100"
+        onMouseEnter={() => playSound('select')}
+        onClick={() => handleMenuClick(id)}
+      >
+        <span>{GlyphText({ text: label })}</span>
+      </button>
+    );
   }
 
   return (
-    <>
-      <GlobalStyle />
-      <ThemeRoot>
-        <ViewportFrame style={{ transform: `scale(${viewportScale})` }} $booted={booted}>
-          <Scene>
-            <SceneBackdrop />
+    <ShadowRoot styleText={THEME_STYLE_TEXT}>
+      <div className={`jamie-host ${crtEnabled ? 'crt-effect' : ''}`}>
+        <div id="root" className="jamie-root" style={{ transform: `scale(${scale})` }}>
+          <div className="flex h-screen" data-active="true">
+            <div className="w-[1100px] h-[825px] mx-auto my-[5rem] relative">
+              {page === 'home' && (
+                <>
+                  <WindowBox
+                    label="party"
+                    className="w-[1000px] h-[720px] m-auto absolute top-[44px]"
+                    style={windowStyle}
+                  >
+                    <div className="flex justify-between">
+                      <div
+                        className="_portrait_15lul_1"
+                        data-shake={portraitShake ? 'true' : 'false'}
+                        data-dying={portraitDying ? 'true' : 'false'}
+                        data-interactive="true"
+                        data-health={String(currentHealth)}
+                        onMouseEnter={() => currentHealth !== 0 && playSound('select')}
+                        onClick={handlePortraitClick}
+                      >
+                        {damageValue && (
+                          <p className="absolute">
+                            {GlyphText({ text: damageValue, resource: true, color: currentHealth === 0 ? 'yellow' : 'white' })}
+                          </p>
+                        )}
+                        <div className="self-center relative">
+                          <div className="jp-placeholder-portrait">{getInitials(cv.name)}</div>
+                        </div>
+                        {currentHealth === 0 && (
+                          <div className="absolute top-full" onMouseEnter={() => playSound('select')}>
+                            <WindowBox label="healButton">
+                              {GlyphText({ text: 'Revive', color: currentMana < 34 ? 'grey' : 'white' })}
+                            </WindowBox>
+                          </div>
+                        )}
+                      </div>
 
-            <PageInfoBox style={windowStyle}>
-              <PageInfoText>{PAGE_LABELS[page]}</PageInfoText>
-            </PageInfoBox>
+                      <div className="mt-2 ml-8">
+                        <p className="mb-2">{GlyphText({ text: cv.name })}</p>
+                        <p className="flex">
+                          <GlyphToken sprite="lv" />
+                          {GlyphText({ text: String(level), resource: true })}
+                        </p>
 
-            <MenuBox style={windowStyle}>
-              {page !== 'home' && (
-                <CloseButton
-                  type="button"
-                  aria-label="Back to home"
-                  onMouseEnter={() => playSound('select')}
-                  onClick={() => changePage('home')}
-                >
-                  X
-                </CloseButton>
+                        <div className="_resourceCounter_12uml_1 flex">
+                          <GlyphToken sprite="hp" className="mr-2" />
+                          <div className="flex flex-col">
+                            <div className="flex">
+                              <span className="w-[92px] flex justify-end">{GlyphText({ text: String(currentHealth), resource: true, color: currentHealth <= Math.floor(maxHealth * 0.35) ? 'yellow' : 'white' })}</span>
+                              <span>{GlyphText({ text: '/', resource: true })}</span>
+                              <span className="w-[92px] flex justify-end">{GlyphText({ text: String(maxHealth), resource: true })}</span>
+                            </div>
+                            <div className="_resourceBar_12uml_5">
+                              <div style={{ width: `${(currentHealth / maxHealth) * 100}%`, backgroundImage: 'linear-gradient(90deg, rgb(79, 143, 212), rgb(198, 205, 237))' }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="_resourceCounter_12uml_1 flex">
+                          <GlyphToken sprite="mp" className="mr-2" />
+                          <div className="flex flex-col">
+                            <div className="flex">
+                              <span className="w-[92px] flex justify-end">{GlyphText({ text: String(currentMana), resource: true, color: currentMana <= Math.floor(maxMana * 0.35) ? 'yellow' : 'white' })}</span>
+                              <span>{GlyphText({ text: '/', resource: true })}</span>
+                              <span className="w-[92px] flex justify-end">{GlyphText({ text: String(maxMana), resource: true })}</span>
+                            </div>
+                            <div className="_resourceBar_12uml_5">
+                              <div style={{ width: `${(currentMana / maxMana) * 100}%`, backgroundImage: 'linear-gradient(90deg, rgb(99, 217, 193), rgb(198, 205, 237))' }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-12">
+                        <p>{GlyphText({ text: 'next level' })}</p>
+                        <div className="ml-7">
+                          <div className="_progressBar_1ghf2_1">
+                            <div>
+                              <div style={{ width: `${nextLevelProgress}%`, backgroundColor: 'rgb(245, 196, 208)' }} />
+                            </div>
+                          </div>
+                        </div>
+                        <p>{GlyphText({ text: `Limit level ${limitLevel}` })}</p>
+                        <div className="ml-7">
+                          <div className="_progressBar_1ghf2_1" data-limit="true">
+                            <div>
+                              <div data-limit="true" style={{ width: '100%', backgroundColor: 'rgb(223, 189, 221)' }} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-center h-[340px] w-[720px] left-[53px] right-[220px] top-[294px] absolute">
+                      <WindowBox label="bio" style={windowStyle}>
+                        {summaryLines.map((line, index) => (
+                          <p key={`${line}-${index}`} className={index === 1 || index === 2 ? 'mb-6' : 'mb-2'}>
+                            {GlyphText({ text: line })}
+                          </p>
+                        ))}
+                      </WindowBox>
+                    </div>
+                  </WindowBox>
+
+                  <WindowBox
+                    label="metaInfo"
+                    className="w-[280px] h-[110px] m-auto absolute right-0 bottom-[110px]"
+                    style={windowStyle}
+                  >
+                    <ul className="flex justify-between flex-col h-full">
+                      <li className="flex justify-between">
+                        <span>{GlyphText({ text: 'Time' })}</span>
+                        <span data-label="time">{GlyphText({ text: formatClock(seconds), resource: true })}</span>
+                      </li>
+                      <li className="flex justify-between">
+                        <span>{GlyphText({ text: 'Gil' })}</span>
+                        <span>{GlyphText({ text: String(gil), resource: true })}</span>
+                      </li>
+                    </ul>
+                  </WindowBox>
+                </>
               )}
 
-              <MenuList>
-                {MENU_ITEMS.map((item) => (
-                  <MenuItemButton
-                    key={item.id}
-                    type="button"
-                    $active={page === item.id}
-                    onMouseEnter={() => playSound('select')}
-                    onClick={() => changePage(item.id)}
-                  >
-                    {item.label}
-                  </MenuItemButton>
-                ))}
+              {page === 'projects' && (
+                <>
+                  <WindowBox label="header" className="h-[84px] absolute" style={windowStyle}>
+                    <div className="ml-4">
+                      <span>{GlyphText({ text: 'Use' })}</span>
+                    </div>
+                  </WindowBox>
 
-                {quickLinks.map((item) => (
-                  <MenuExternalLink
-                    key={item.label}
-                    href={item.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onMouseEnter={() => playSound('select')}
-                    onClick={() => playSound('saveSelect')}
-                  >
-                    {item.label}
-                  </MenuExternalLink>
-                ))}
-              </MenuList>
-            </MenuBox>
+                  <WindowBox label="description" className="h-[87px] absolute top-[93px]" style={windowStyle}>
+                    {GlyphText({ text: hoverProject?.name || 'No project selected.' })}
+                  </WindowBox>
 
-            {page === 'home' && (
-              <>
-                <PartyBox style={windowStyle}>
-                  <StatusRow>
-                    <PortraitWrap
-                      type="button"
-                      $shake={portraitShake}
-                      $isDead={currentHealth === 0}
-                      onMouseEnter={() => playSound('select')}
-                      onClick={handlePortraitAction}
-                    >
-                      {damageText && <DamagePopup>{damageText}</DamagePopup>}
-                      <PortraitCore>
-                        <PortraitGlow />
-                        <PortraitInitials>{getInitials(cv.name)}</PortraitInitials>
-                      </PortraitCore>
-                      {currentHealth === 0 && <ReviveNote>Use MP to revive</ReviveNote>}
-                    </PortraitWrap>
+                  <WindowBox label="contentLeft" className="absolute top-[190px] bottom-0" style={windowStyle}>
+                    <div className="flex justify-between">
+                      <div className="_portrait_15lul_1">
+                        <div className="self-center relative">
+                          <div className="jp-placeholder-portrait">{getInitials(cv.name)}</div>
+                        </div>
+                      </div>
+                      <div className="ml-2 mt-[1.3rem]">
+                        <p className="mb-4">{GlyphText({ text: cv.name })}</p>
+                        <p className="flex">
+                          <GlyphToken sprite="lv" />
+                          {GlyphText({ text: String(level), resource: true })}
+                        </p>
+                      </div>
+                    </div>
 
-                    <StatusMeta>
-                      <StatusName>{cv.name}</StatusName>
-                      <LevelLine>lv {String(level).padStart(2, '0')}</LevelLine>
-                      <ResourceCounter>
-                        <ResourceLabel>HP</ResourceLabel>
-                        <ResourceNumbers>
-                          <span>{String(currentHealth || 0).padStart(4, '0')}</span>
-                          <span>/</span>
-                          <span>{String(maxHealth).padStart(4, '0')}</span>
-                        </ResourceNumbers>
-                        <ResourceBar>
-                          <ResourceFill
-                            style={{ width: `${((currentHealth || 0) / maxHealth) * 100}%`, background: 'linear-gradient(90deg, #4f8fd4, #c6cded)' }}
-                          />
-                        </ResourceBar>
-                      </ResourceCounter>
+                    {!!hoverProjectLines.length && (
+                      <WindowBox className="absolute bottom-[20px] left-[30px] right-[34px]" label="moreInfo" style={windowStyle}>
+                        {hoverProjectLines.map((line, index) => (
+                          <div key={`${line}-${index}`} className="mb-2">
+                            {GlyphText({ text: line })}
+                          </div>
+                        ))}
+                      </WindowBox>
+                    )}
+                  </WindowBox>
 
-                      <ResourceCounter>
-                        <ResourceLabel>MP</ResourceLabel>
-                        <ResourceNumbers>
-                          <span>{String(currentMana || 0).padStart(3, '0')}</span>
-                          <span>/</span>
-                          <span>{String(maxMana).padStart(3, '0')}</span>
-                        </ResourceNumbers>
-                        <ResourceBar>
-                          <ResourceFill
-                            style={{ width: `${((currentMana || 0) / maxMana) * 100}%`, background: 'linear-gradient(90deg, #63d9c1, #c6cded)' }}
-                          />
-                        </ResourceBar>
-                      </ResourceCounter>
-                    </StatusMeta>
-
-                    <ProgressStack>
-                      <ProgressLabel>next level</ProgressLabel>
-                      <ProgressBar>
-                        <ProgressFill style={{ width: `${nextLevelProgress}%`, backgroundColor: '#f5c4d0' }} />
-                      </ProgressBar>
-                      <ProgressLabel>Limit level {Math.min(4, 1 + Math.floor(limitProgress / 25))}</ProgressLabel>
-                      <ProgressBar $limit>
-                        <ProgressFill style={{ width: `${limitProgress}%`, backgroundColor: '#dfbddd' }} />
-                      </ProgressBar>
-                    </ProgressStack>
-                  </StatusRow>
-
-                  <BioBox style={windowStyle}>
-                    {summaryLines.map((line, index) => (
-                      <BioLine key={`${line}-${index}`} style={{ animationDelay: `${index * 70}ms` }}>
-                        {line}
-                      </BioLine>
-                    ))}
-                  </BioBox>
-                </PartyBox>
-
-                <MetaBox style={windowStyle}>
-                  <MetaRow>
-                    <span>Time</span>
-                    <strong>{formatClock(seconds)}</strong>
-                  </MetaRow>
-                  <MetaRow>
-                    <span>Gil</span>
-                    <strong>{gil}</strong>
-                  </MetaRow>
-                </MetaBox>
-              </>
-            )}
-
-            {page === 'projects' && (
-              <PageArea>
-                <HeaderBox style={windowStyle}>
-                  <HeaderLabel>Use</HeaderLabel>
-                </HeaderBox>
-
-                <DescriptionBox style={windowStyle}>
-                  <DescriptionText>{hoveredProjectItem?.name || 'Project selection unavailable.'}</DescriptionText>
-                </DescriptionBox>
-
-                <ContentLeftBox style={windowStyle}>
-                  <CompactStatus onMouseEnter={() => playSound('select')}>
-                    <PortraitChip>{getInitials(cv.name)}</PortraitChip>
-                    <CompactStatusMeta>
-                      <strong>{cv.name}</strong>
-                      <span>{cv.currentJobTitle || 'Profile loaded'}</span>
-                    </CompactStatusMeta>
-                  </CompactStatus>
-
-                  {!!projectLines.length && (
-                    <InfoPanel style={windowStyle}>
-                      {projectLines.map((line, index) => (
-                        <InfoLine key={`${line}-${index}`}>{line}</InfoLine>
+                  <WindowBox label="contentRight" className="absolute top-[190px] right-0 bottom-0" style={windowStyle}>
+                    <ul>
+                      {projects.map((project, index) => (
+                        <li
+                          key={`${project.name}-${index}`}
+                          className="_item_1kefc_1 mb-2.5"
+                          onMouseEnter={() => {
+                            playSound('select');
+                            setHoverProjectIndex(index);
+                          }}
+                          onClick={() => handleExternalClick(project.url)}
+                        >
+                          <button type="button" className="jp-button-reset flex justify-between items-center">
+                            <span className="flex items-center">
+                              <img src={getProjectIcon(index)} alt="" className="jp-project-icon" />
+                              <span>{GlyphText({ text: project.name })}</span>
+                            </span>
+                            <span className="flex">
+                              <span className="mr-2">{GlyphText({ text: ':' })}</span>
+                              <span className="mt-1">{GlyphText({ text: '1', resource: true })}</span>
+                            </span>
+                          </button>
+                        </li>
                       ))}
-                    </InfoPanel>
-                  )}
-                </ContentLeftBox>
+                    </ul>
+                  </WindowBox>
+                </>
+              )}
 
-                <ContentRightBox style={windowStyle}>
-                  <ActionList>
-                    {projectItems.map((project, index) => (
-                      <ActionItemButton
-                        key={`${project.name}-${index}`}
-                        type="button"
-                        onMouseEnter={() => {
-                          playSound('select');
-                          setHoverProject(index);
-                        }}
-                        onClick={() => {
-                          setSelectedProject(index);
-                          openExternal(project.url);
-                        }}
-                      >
-                        <ActionItemMain>
-                          <ActionIcon>{String(index + 1).padStart(2, '0')}</ActionIcon>
-                          <span>{project.name}</span>
-                        </ActionItemMain>
-                        <ActionCount>{project.date || '----'}</ActionCount>
-                      </ActionItemButton>
-                    ))}
-                  </ActionList>
-                </ContentRightBox>
-              </PageArea>
-            )}
+              {page === 'skills' && (
+                <>
+                  <WindowBox label="skillsHeader" className="h-[261px] absolute top-0" style={windowStyle}>
+                    <div className="flex justify-between items-end">
+                      <div className="w-[447px] mb-2 ml-2">
+                        <div className="flex justify-between">
+                          <div className="_portrait_15lul_1">
+                            <div className="self-center relative">
+                              <div className="jp-placeholder-portrait">{getInitials(cv.name)}</div>
+                            </div>
+                          </div>
+                          <div className="mt-2 ml-8">
+                            <p className="mb-2">{GlyphText({ text: cv.name })}</p>
+                            <p className="flex">
+                              <GlyphToken sprite="lv" />
+                              {GlyphText({ text: String(level), resource: true })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-            {page === 'skills' && (
-              <PageArea>
-                <TallHeaderBox style={windowStyle}>
-                  <StatusRow $compact>
-                    <CompactStatus>
-                      <PortraitChip>{getInitials(cv.name)}</PortraitChip>
-                      <CompactStatusMeta>
-                        <strong>{cv.name}</strong>
-                        <span>{cv.currentJobTitle || 'Profile loaded'}</span>
-                      </CompactStatusMeta>
-                    </CompactStatus>
+                      <div className="mt-9 mr-2">
+                        <p className="flex mt-1">
+                          <span className="mr-3">{GlyphText({ text: 'Wpn.', color: 'blue' })}</span>
+                          <span>{GlyphText({ text: 'Toolkit' })}</span>
+                        </p>
+                        <div className="_equipmentContainer_i51mu_1 flex">
+                          {skills.slice(0, 5).map((skill) => (
+                            <div key={skill.id} className="_materiaSlot_i51mu_14">
+                              <div className="_skill_i51mu_49" data-color={skill.color}>
+                                {skill.name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
 
-                    <EquipmentColumn>
-                      <EquipmentLabel>Wpn. Toolkit</EquipmentLabel>
-                      <EquipmentSlots>
-                        {skills.slice(0, 5).map((item) => (
-                          <MateriaSlot key={item.id} data-color={item.color} />
-                        ))}
-                      </EquipmentSlots>
-                      <EquipmentLabel>Arm. Stack</EquipmentLabel>
-                      <EquipmentSlots>
-                        {skills.slice(5, 9).map((item) => (
-                          <MateriaSlot key={item.id} data-color={item.color} />
-                        ))}
-                      </EquipmentSlots>
-                    </EquipmentColumn>
-                  </StatusRow>
-                </TallHeaderBox>
+                        <p className="flex mt-1">
+                          <span className="mr-3">{GlyphText({ text: 'Arm.', color: 'blue' })}</span>
+                          <span>{GlyphText({ text: 'Stack' })}</span>
+                        </p>
+                        <div className="_equipmentContainer_i51mu_1 flex">
+                          {skills.slice(5, 9).map((skill) => (
+                            <div key={skill.id} className="_materiaSlot_i51mu_14">
+                              <div className="_skill_i51mu_49" data-color={skill.color}>
+                                {skill.name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </WindowBox>
 
-                <DescriptionBox style={windowStyle}>
-                  <DescriptionText>{activeSkill?.description || 'Skill file not selected.'}</DescriptionText>
-                </DescriptionBox>
+                  <WindowBox label="skillsDescription" className="h-[79px] absolute top-[270px]" style={windowStyle}>
+                    <p>{GlyphText({ text: selectedSkill?.description || 'No skill selected.' })}</p>
+                  </WindowBox>
 
-                <ContentLeftBox $short style={windowStyle}>
-                  <SkillPreviewName data-color={activeSkill?.color}>{activeSkill?.name || 'Unknown'}</SkillPreviewName>
-                  <StarRow>
-                    {Array.from({ length: 5 }).map((_, index) => (
-                      <StarDot key={index} $active={index < (activeSkill?.score || 0)} data-color={activeSkill?.color} />
-                    ))}
-                  </StarRow>
-                </ContentLeftBox>
+                  <WindowBox label="skillsContentLeft" className="absolute top-[359px] bottom-0" style={windowStyle}>
+                    <div className="flex justify-between items-center">
+                      <p className="_skill_1cutj_1 flex" data-color={selectedSkill?.color}>
+                        {GlyphText({ text: selectedSkill?.name || 'Unknown' })}
+                      </p>
+                      {!!selectedSkill && (
+                        <ul className="flex">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <li
+                              key={index}
+                              className="_star_1cutj_51"
+                              data-color={selectedSkill.color}
+                              data-star={index < selectedSkill.score}
+                              data-crt={crtEnabled ? 'true' : undefined}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </WindowBox>
 
-                <ContentRightBox $short style={windowStyle}>
-                  <ActionList>
-                    {skills.map((skill, index) => (
-                      <ActionItemButton
-                        key={skill.id}
-                        type="button"
-                        onMouseEnter={() => {
-                          playSound('select');
-                          setSelectedSkill(index);
-                        }}
-                        onClick={() => setSelectedSkill(index)}
-                      >
-                        <ActionItemMain>
-                          <MateriaInline data-color={skill.color} />
-                          <span>{skill.name}</span>
-                        </ActionItemMain>
-                      </ActionItemButton>
-                    ))}
-                  </ActionList>
-                </ContentRightBox>
-              </PageArea>
-            )}
+                  <WindowBox label="skillsContentRight" className="absolute top-[359px] right-0 bottom-0" style={windowStyle}>
+                    <ul>
+                      {skills.map((skill) => (
+                        <li
+                          key={skill.id}
+                          className="mb-1.5"
+                          onMouseEnter={() => {
+                            playSound('select');
+                            setSelectedSkillId(skill.id);
+                          }}
+                          onClick={() => {
+                            playSound('materia');
+                            setSelectedSkillId(skill.id);
+                          }}
+                        >
+                          <span className="_skill_1cutj_1 flex" data-color={skill.color} data-active={selectedSkill?.id === skill.id ? 'true' : undefined}>
+                            {GlyphText({ text: skill.name })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </WindowBox>
+                </>
+              )}
 
-            {page === 'history' && (
-              <PageArea>
-                <HeaderBox style={windowStyle}>
-                  <HeaderRow>
-                    <HeaderLabel>{historyPhase === 'loaded' ? 'Select a file.' : 'Select a Save Data File.'}</HeaderLabel>
-                    {historyPhase === 'loaded' && <HeaderFile>FILE {historyMode === 'experience' ? '01' : historyMode === 'education' ? '02' : '03'}</HeaderFile>}
-                  </HeaderRow>
-                </HeaderBox>
-
-                <HistoryBody style={windowStyle}>
+              {page === 'history' && (
+                <WindowBox label="historyWrapper" className="w-[1000px] h-[720px] m-auto absolute top-[44px]" style={windowStyle}>
                   {historyPhase === 'select' && (
-                    <CenteredSelector>
-                      <SelectorButton
-                        type="button"
-                        onMouseEnter={() => playSound('select')}
-                        onClick={() => startHistory('experience')}
-                      >
-                        Work
-                      </SelectorButton>
-                      <SelectorButton
-                        type="button"
-                        onMouseEnter={() => playSound('select')}
-                        onClick={() => startHistory('education')}
-                      >
-                        Education
-                      </SelectorButton>
-                      <SelectorButton
-                        type="button"
-                        onMouseEnter={() => playSound('select')}
-                        onClick={() => startHistory('awards')}
-                      >
-                        Awards
-                      </SelectorButton>
-                    </CenteredSelector>
+                    <>
+                      <div className="relative h-[84px] mb-[10px]">
+                        <WindowBox label="MemCardHeader" className="h-full absolute top-0 left-0 right-0" style={windowStyle}>
+                          {GlyphText({ text: 'Select a Save Data File.' })}
+                        </WindowBox>
+                      </div>
+                      <WindowBox label="memCardSelector" className="absolute z-1 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={windowStyle}>
+                        <ul className="_historyOptions_1g8c2_1 flex flex-col items-center gap-1">
+                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => playSound('select')}>
+                            <button type="button" className="jp-button-reset" onClick={() => setHistory('experience')}>
+                              {GlyphText({ text: 'Work' })}
+                            </button>
+                          </li>
+                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => playSound('select')}>
+                            <button type="button" className="jp-button-reset" onClick={() => setHistory('education')}>
+                              {GlyphText({ text: 'Education' })}
+                            </button>
+                          </li>
+                        </ul>
+                      </WindowBox>
+                    </>
                   )}
 
                   {historyPhase === 'loading' && (
-                    <LoadingWrap>
-                      <LoadingLabel>Checking Save Data File.</LoadingLabel>
-                      <MemoryBar>
-                        <MemoryFill style={{ width: `${historyProgress}%` }} />
-                      </MemoryBar>
-                    </LoadingWrap>
+                    <>
+                      <div className="relative h-[84px] mb-[10px]">
+                        <WindowBox label="MemCardHeader" className="h-full absolute top-0 left-0 right-0" style={windowStyle}>
+                          {GlyphText({ text: 'Checking Save Data File.' })}
+                        </WindowBox>
+                      </div>
+                      <WindowBox label="memCardLoadingBar" className="w-[27rem] h-[6rem] absolute z-2 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={windowStyle}>
+                        <div className="_memCardLoadingBar_1afn4_1 h-[3rem]" data-progress={Math.min(100, historyProgress)} style={{ width: `${historyProgress}%` }} />
+                      </WindowBox>
+                    </>
                   )}
 
                   {historyPhase === 'loaded' && (
-                    <HistoryCardList>
-                      {historyRecords.slice(0, 3).map((item, index) => (
-                        <HistoryCard
-                          key={item.id}
-                          href={item.link || '#'}
-                          onMouseEnter={() => playSound('select')}
-                          onClick={(event) => {
-                            if (!item.link) {
-                              event.preventDefault();
-                              playSound('error');
-                            } else {
-                              playSound('saveSelect');
+                    <>
+                      <div className="relative h-[84px] mb-[10px]">
+                        <WindowBox label="historyHeader" className="h-full absolute top-0 left-0 right-0" style={windowStyle}>
+                          {GlyphText({ text: 'Select a file.' })}
+                        </WindowBox>
+                        <WindowBox label="historyFileLabel" className="h-full w-[225px] absolute top-0 right-[280px] flex" style={windowStyle}>
+                          {GlyphText({ text: 'FILE', color: 'yellow' })}
+                          {GlyphText({ text: historyMode === 'education' ? ' 02' : ' 01' })}
+                        </WindowBox>
+                      </div>
+
+                      {historyRecords.slice(0, 3).map((record) => {
+                        const ContentTag = record.link ? 'a' : 'button';
+                        const contentProps = record.link
+                          ? {
+                              href: record.link,
+                              target: '_blank',
+                              rel: 'noreferrer',
+                              className: 'jp-history-link',
                             }
-                          }}
-                        >
-                          <HistoryThumb>{getInitials(item.name)}</HistoryThumb>
-                          <HistoryInfo>
-                            <HistoryName>{item.name}</HistoryName>
-                            <HistoryMeta>{item.role}</HistoryMeta>
-                            <HistorySummary>{item.summary}</HistorySummary>
-                          </HistoryInfo>
-                          <HistoryMetaBox style={windowStyle}>
-                            <MetaRow>
-                              <span>Role</span>
-                              <strong>{item.role}</strong>
-                            </MetaRow>
-                            <MetaRow>
-                              <span>Years</span>
-                              <strong>{item.year}</strong>
-                            </MetaRow>
-                          </HistoryMetaBox>
-                        </HistoryCard>
-                      ))}
-                    </HistoryCardList>
-                  )}
-                </HistoryBody>
-              </PageArea>
-            )}
+                          : {
+                              type: 'button',
+                              className: 'jp-history-button',
+                            };
 
-            {page === 'config' && (
-              <PageArea>
-                <HeaderBox style={windowStyle}>
-                  <HeaderLabel>{configHint}</HeaderLabel>
-                </HeaderBox>
-
-                <ConfigBody style={windowStyle}>
-                  <ConfigRow
-                    onMouseEnter={() => setConfigHint('Select colours for the window')}
-                    onMouseLeave={() => setConfigHint('Tune the interface options.')}
-                  >
-                    <ConfigLabel>Window Color</ConfigLabel>
-
-                    <ColorPicker>
-                      <ColorQuadrants>
-                        {COLOR_KEYS.map((slot) => (
-                          <ColorQuadrantButton
-                            key={slot}
-                            type="button"
-                            $active={slot === activeColorSlot}
-                            style={{ backgroundColor: colorToCss(windowColors[slot]) }}
+                        return (
+                          <div
+                            key={record.id}
+                            className="_historySave_pu0b0_1 cursor-pointer"
                             onMouseEnter={() => playSound('select')}
-                            onClick={() => setActiveColorSlot(slot)}
-                          />
-                        ))}
-                      </ColorQuadrants>
+                            onClick={() => {
+                              if (record.link) {
+                                playSound('saveSelect');
+                              } else {
+                                playSound('error');
+                              }
+                            }}
+                          >
+                            <ContentTag {...contentProps}>
+                              <WindowBox label="historySave" className="h-[235px] relative" style={windowStyle}>
+                                <div className="mr-[414px] flex gap-5">
+                                  <div className="jp-history-thumb">{getInitials(record.name)}</div>
+                                  <div className="jp-history-thumb">{getInitials(cv.name)}</div>
+                                  <div className="ml-2 mt-[1.3rem]">
+                                    <p className="mb-4">{GlyphText({ text: cv.name })}</p>
+                                    <p className="flex">
+                                      <GlyphToken sprite="lv" />
+                                      {GlyphText({ text: String(level), resource: true })}
+                                    </p>
+                                  </div>
+                                </div>
 
-                      <SliderGroup>
-                        {windowColors[activeColorSlot].map((value, index) => (
-                          <SliderRow key={`${activeColorSlot}-${index}`}>
-                            <span>{['R', 'G', 'B'][index]}</span>
-                            <span>{String(value).padStart(3, '0')}</span>
-                            <SliderInput
-                              type="range"
-                              min="0"
-                              max="255"
-                              value={value}
-                              onChange={(event) => updateColor(activeColorSlot, index, event.target.value)}
-                            />
-                          </SliderRow>
-                        ))}
-                      </SliderGroup>
-                    </ColorPicker>
-                  </ConfigRow>
+                                <WindowBox label="historySaveMeta" className="absolute w-[27rem] h-[7rem] top-[31px] right-[-2px]" style={windowStyle}>
+                                  <ul>
+                                    <li className="flex justify-between mb-3">
+                                      <span>{GlyphText({ text: 'Role' })}</span>
+                                      <span>{GlyphText({ text: record.role })}</span>
+                                    </li>
+                                    <li className="flex justify-between">
+                                      <span>{GlyphText({ text: 'Years' })}</span>
+                                      <span>{GlyphText({ text: record.year })}</span>
+                                    </li>
+                                  </ul>
+                                </WindowBox>
 
-                  <ConfigRow
-                    onMouseEnter={() => setConfigHint('Enable or disable sound')}
-                    onMouseLeave={() => setConfigHint('Tune the interface options.')}
-                  >
-                    <ConfigLabel>Sound</ConfigLabel>
-                    <ToggleButtons>
-                      <ToggleButton
-                        type="button"
-                        $active={soundEnabled}
-                        onMouseEnter={() => playSound('select')}
-                        onClick={() => setSoundEnabled(true)}
-                      >
-                        On
-                      </ToggleButton>
-                      <ToggleButton
-                        type="button"
-                        $active={!soundEnabled}
-                        onMouseEnter={() => playSound('select')}
-                        onClick={() => setSoundEnabled(false)}
-                      >
-                        Off
-                      </ToggleButton>
-                    </ToggleButtons>
-                  </ConfigRow>
+                                <WindowBox label="historySave" className="absolute w-[43.8rem] h-[5rem] bottom-[-11px] right-[-2px]" style={windowStyle}>
+                                  {GlyphText({ text: record.name })}
+                                </WindowBox>
+                              </WindowBox>
+                            </ContentTag>
+                          </div>
+                        );
+                      })}
 
-                  <ConfigRow
-                    onMouseEnter={() => setConfigHint('Enable or disable CRT effects')}
-                    onMouseLeave={() => setConfigHint('Tune the interface options.')}
-                  >
-                    <ConfigLabel>CRT Effect</ConfigLabel>
-                    <ToggleButtons>
-                      <ToggleButton
+                      {Array.from({ length: Math.max(0, 3 - historyRecords.length) }).map((_, index) => (
+                        <WindowBox key={`empty-${index}`} label="historySave" className="h-[235px] relative flex items-center jp-empty-save" style={windowStyle}>
+                          <span className="pl-32">{GlyphText({ text: 'EMPTY', color: 'yellow' })}</span>
+                        </WindowBox>
+                      ))}
+                    </>
+                  )}
+                </WindowBox>
+              )}
+
+              {page === 'config' && (
+                <>
+                  <div className="relative h-[84px] mb-[10px]">
+                    <WindowBox label="configHeader" className="h-full absolute top-0 left-0 right-0" style={windowStyle}>
+                      {GlyphText({ text: selectedColorSlot ? 'Adjust window colour channels' : 'Configure theme options' })}
+                    </WindowBox>
+                  </div>
+
+                  <WindowBox label="configBody" className="h-[45.1rem] absolute top-[93px] left-0 right-[315px]" style={windowStyle}>
+                    <ul>
+                      <li className="_optionToggle_1xz4b_1 ml-24 mb-8 flex jp-stack-gap">
+                        <div className="w-[24rem] flex items-end pb-1">{GlyphText({ text: 'Window Color', color: 'blue' })}</div>
+                        <WindowBox label="configColorPreview" className="_colorPicker_103lp_1 w-[14rem] h-[5rem] relative" style={windowStyle}>
+                          <div>
+                            <div className="flex justify-between absolute left-0 top-0 right-0 h-1/2">
+                              {COLOR_KEYS.slice(0, 2).map((key) => (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  className="w-1/2"
+                                  data-active={selectedColorSlot === key ? 'true' : undefined}
+                                  style={{ backgroundColor: `rgb(${windowColor[key].join(',')})` }}
+                                  onMouseEnter={() => playSound('select')}
+                                  onClick={() => setSelectedColorSlot(key)}
+                                />
+                              ))}
+                            </div>
+                            <div className="flex justify-between absolute left-0 bottom-0 right-0 h-1/2">
+                              {COLOR_KEYS.slice(2).map((key) => (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  className="w-1/2"
+                                  data-active={selectedColorSlot === key ? 'true' : undefined}
+                                  style={{ backgroundColor: `rgb(${windowColor[key].join(',')})` }}
+                                  onMouseEnter={() => playSound('select')}
+                                  onClick={() => setSelectedColorSlot(key)}
+                                />
+                              ))}
+                            </div>
+                          </div>
+
+                          {selectedColorSlot && (
+                            <>
+                              <WindowBox
+                                className="_RGBPreview_103lp_15"
+                                style={{ backgroundColor: `rgb(${windowColor[selectedColorSlot].join(',')})` }}
+                              />
+                              <div className="_RGBReset_103lp_23" data-active={JSON.stringify(windowColor[selectedColorSlot]) !== JSON.stringify(DEFAULT_WINDOW_COLOR[selectedColorSlot]) ? 'true' : undefined} onClick={resetWindowColor}>
+                                <WindowBox label="reset">
+                                  {GlyphText({ text: 'Reset' })}
+                                </WindowBox>
+                              </div>
+                              <WindowBox className="_RGBSliders_103lp_54" style={windowStyle}>
+                                {windowColor[selectedColorSlot].map((value, index) => (
+                                  <div key={`${selectedColorSlot}-${index}`} className={index === 0 ? '_red_103lp_77' : index === 1 ? '_green_103lp_80' : '_blue_103lp_83'}>
+                                    <span className="mr-3">{GlyphText({ text: String(value).padStart(3, '0'), resource: true })}</span>
+                                    <input className="_RGBSlider_103lp_54" data-crt={crtEnabled ? 'true' : undefined} type="range" min="0" max="255" value={value} onChange={(event) => updateColor(index, event.target.value)} />
+                                  </div>
+                                ))}
+                              </WindowBox>
+                            </>
+                          )}
+                        </WindowBox>
+                      </li>
+
+                      <li className="_optionToggle_1xz4b_1 ml-24 mb-8 flex" onMouseEnter={() => playSound('select')}>
+                        <div className="w-[24rem] flex items-end pb-1">{GlyphText({ text: 'Sound', color: 'blue' })}</div>
+                        <div className="w-[18rem] flex justify-between">
+                          <button type="button" data-disabled={!soundEnabled} className="jp-button-reset" onClick={() => setSoundEnabled(true)}>
+                            {GlyphText({ text: 'On' })}
+                          </button>
+                          <button type="button" data-disabled={soundEnabled} className="jp-button-reset" onClick={() => setSoundEnabled(false)}>
+                            {GlyphText({ text: 'Off' })}
+                          </button>
+                        </div>
+                      </li>
+
+                      <li className="_optionToggle_1xz4b_1 ml-24 mb-8 flex" onMouseEnter={() => playSound('select')}>
+                        <div className="w-[24rem] flex items-end pb-1">{GlyphText({ text: 'CRT Effect', color: 'blue' })}</div>
+                        <div className="w-[18rem] flex justify-between">
+                          <button type="button" data-disabled={!crtEnabled} className="jp-button-reset" onClick={() => setCrtEnabled(true)}>
+                            {GlyphText({ text: 'On' })}
+                          </button>
+                          <button type="button" data-disabled={crtEnabled} className="jp-button-reset" onClick={() => setCrtEnabled(false)}>
+                            {GlyphText({ text: 'Off' })}
+                          </button>
+                        </div>
+                      </li>
+                    </ul>
+                  </WindowBox>
+                </>
+              )}
+
+              <WindowBox
+                label="pageInfo"
+                className="w-[535px] h-[95px] m-auto absolute right-0 top-0"
+                style={windowStyle}
+              >
+                {GlyphText({ text: PAGE_TITLES[page] || PAGE_TITLES.home })}
+              </WindowBox>
+
+              <WindowBox
+                label="menu"
+                className={`m-auto w-[270px] absolute right-0 ${page !== 'home' ? 'h-[84px]' : 'h-[530px]'}`}
+                data-animated={page === 'home' ? 'true' : undefined}
+                style={windowStyle}
+              >
+                <ul className="_menu_l1p5s_1">
+                  {MENU_ORDER.map((item, index) => (
+                    <li key={item} className={`h-[29px] mb-4 flex justify-between`}>
+                      {renderMenuItem(item, item.charAt(0).toUpperCase() + item.slice(1))}
+                    </li>
+                  ))}
+
+                  {page !== 'home' && (
+                    <li className="h-[29px] mb-4 flex justify-between">
+                      <button
                         type="button"
-                        $active={crtEnabled}
+                        className="jp-button-reset flex w-100"
+                        data-label="close"
                         onMouseEnter={() => playSound('select')}
-                        onClick={() => setCrtEnabled(true)}
+                        onClick={() => handleMenuClick('home')}
                       >
-                        On
-                      </ToggleButton>
-                      <ToggleButton
+                        {GlyphText({ text: 'Close' })}
+                      </button>
+                    </li>
+                  )}
+
+                  {page === 'home' && <li className="h-[29px] mb-4 flex justify-between" />}
+
+                  {menuLinks.map((link) => (
+                    <li key={link.id} className="h-[29px] mb-4 flex justify-between">
+                      <button
                         type="button"
-                        $active={!crtEnabled}
+                        className="jp-button-reset flex w-100"
+                        title={link.label}
                         onMouseEnter={() => playSound('select')}
-                        onClick={() => setCrtEnabled(false)}
+                        onClick={() => handleExternalClick(link.href)}
                       >
-                        Off
-                      </ToggleButton>
-                    </ToggleButtons>
-                  </ConfigRow>
-                </ConfigBody>
-              </PageArea>
-            )}
-          </Scene>
-        </ViewportFrame>
-      </ThemeRoot>
-    </>
+                        <span>{GlyphText({ text: link.label })}</span>
+                        <GlyphToken sprite="external-link-icon" className="ml-2" />
+                      </button>
+                    </li>
+                  ))}
+
+                  {Array.from({ length: Math.max(0, 11 - MENU_ORDER.length - menuLinks.length - (page !== 'home' ? 1 : 0) - 1) }).map((_, index) => (
+                    <li key={`blank-${index}`} className="h-[29px] mb-4 flex justify-between" />
+                  ))}
+                </ul>
+              </WindowBox>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ShadowRoot>
   );
 }
-
-const bootIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const lineIn = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
-
-const shake = keyframes`
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  20% {
-    transform: translateY(-6px);
-  }
-
-  40% {
-    transform: translateY(8px);
-  }
-
-  60% {
-    transform: translateY(-10px);
-  }
-
-  80% {
-    transform: translateY(4px);
-  }
-`;
-
-const pulse = keyframes`
-  0%,
-  100% {
-    opacity: 0.65;
-  }
-
-  50% {
-    opacity: 1;
-  }
-`;
-
-const ThemeRoot = styled.div`
-  min-height: calc(100vh - 56px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top, rgba(59, 82, 180, 0.2), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(10, 105, 175, 0.14), transparent 30%),
-    #000;
-  background-image:
-    radial-gradient(circle at top, rgba(59, 82, 180, 0.2), transparent 34%),
-    radial-gradient(circle at bottom right, rgba(10, 105, 175, 0.14), transparent 30%),
-    url('/jamie-pates/checkerboard.png');
-  background-size: auto, auto, 340px 340px;
-  font-family: 'Departure Mono', 'Courier New', monospace;
-`;
-
-const ViewportFrame = styled.div`
-  width: 1100px;
-  height: 825px;
-  margin: 5rem auto;
-  transform-origin: top center;
-  opacity: ${({ $booted }) => ($booted ? 1 : 0)};
-  animation: ${bootIn} 260ms ease-out both;
-`;
-
-const Scene = styled.div`
-  position: relative;
-  width: 1100px;
-  height: 825px;
-`;
-
-const SceneBackdrop = styled.div`
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.12;
-  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.06) 55%, transparent);
-`;
-
-const boxShell = css`
-  position: absolute;
-  border: 2.2px solid rgba(255, 255, 255, 0.24);
-  border-top-color: rgba(255, 255, 255, 0.28);
-  border-left-color: rgba(255, 255, 255, 0.28);
-  border-bottom-color: rgba(0, 0, 0, 0.5);
-  border-right-color: rgba(0, 0, 0, 0.5);
-  border-radius: 6px;
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-    0 18px 42px rgba(0, 0, 0, 0.28);
-  color: #fff;
-`;
-
-const PageInfoBox = styled.div`
-  ${boxShell}
-  top: 0;
-  right: 0;
-  width: 535px;
-  height: 95px;
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-`;
-
-const PageInfoText = styled.div`
-  font-size: 32px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-`;
-
-const MenuBox = styled.div`
-  ${boxShell}
-  top: 190px;
-  right: 0;
-  width: 270px;
-  min-height: 530px;
-  padding: 18px 18px 20px;
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 0 6px 0 6px;
-  background: rgba(8, 16, 42, 0.95);
-  color: #fff6d1;
-  cursor: pointer;
-`;
-
-const MenuList = styled.div`
-  display: grid;
-  gap: 16px;
-  margin-top: 10px;
-`;
-
-const interactiveHover = css`
-  position: relative;
-  cursor: pointer;
-
-  &:hover::before,
-  &:focus-visible::before {
-    content: '';
-    position: absolute;
-    width: 76px;
-    height: 46px;
-    left: -72px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: url('/jamie-pates/cursor.png') center / contain no-repeat;
-    pointer-events: none;
-  }
-`;
-
-const MenuItemButton = styled.button`
-  ${interactiveHover}
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: ${({ $active }) => ($active ? '#fff5af' : '#fff')};
-  text-align: left;
-  font-size: 26px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-`;
-
-const MenuExternalLink = styled.a`
-  ${interactiveHover}
-  display: inline-block;
-  color: #fff;
-  font-size: 22px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-`;
-
-const PartyBox = styled.div`
-  ${boxShell}
-  top: 44px;
-  left: 0;
-  width: 1000px;
-  height: 720px;
-  padding: 28px 28px 24px;
-`;
-
-const StatusRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 28px;
-  align-items: flex-start;
-
-  ${({ $compact }) =>
-    $compact &&
-    css`
-      align-items: center;
-    `}
-`;
-
-const PortraitWrap = styled.button`
-  ${interactiveHover}
-  position: relative;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  animation: ${({ $shake }) => ($shake ? shake : 'none')} 260ms linear;
-
-  ${({ $isDead }) =>
-    $isDead &&
-    css`
-      filter: grayscale(1) brightness(0.75);
-    `}
-`;
-
-const PortraitCore = styled.div`
-  position: relative;
-  width: 165px;
-  height: 200px;
-  border-radius: 12px;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 38% 24%, rgba(255, 255, 255, 0.26), transparent 18%),
-    linear-gradient(180deg, rgba(79, 143, 212, 0.3), rgba(11, 25, 61, 0.92)),
-    linear-gradient(135deg, rgba(203, 215, 255, 0.18), transparent 45%);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-`;
-
-const PortraitGlow = styled.div`
-  position: absolute;
-  inset: 14px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(86, 167, 255, 0.26), transparent 70%);
-  filter: blur(8px);
-`;
-
-const PortraitInitials = styled.div`
-  position: relative;
-  z-index: 1;
-  font-size: 68px;
-  line-height: 1;
-  letter-spacing: 0.06em;
-`;
-
-const DamagePopup = styled.div`
-  position: absolute;
-  top: -26px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: #fff5af;
-  font-size: 24px;
-  animation: ${lineIn} 120ms ease-out;
-`;
-
-const ReviveNote = styled.div`
-  position: absolute;
-  top: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  font-size: 11px;
-  white-space: nowrap;
-`;
-
-const StatusMeta = styled.div`
-  flex: 1 1 auto;
-  padding-top: 8px;
-`;
-
-const StatusName = styled.h1`
-  margin: 0 0 10px;
-  font-size: 38px;
-  line-height: 1.05;
-  text-transform: uppercase;
-`;
-
-const LevelLine = styled.div`
-  margin-bottom: 18px;
-  font-size: 22px;
-  text-transform: lowercase;
-`;
-
-const ResourceCounter = styled.div`
-  display: grid;
-  grid-template-columns: 40px 1fr;
-  gap: 10px;
-  align-items: start;
-  margin-bottom: 16px;
-`;
-
-const ResourceLabel = styled.span`
-  font-size: 18px;
-  text-transform: uppercase;
-`;
-
-const ResourceNumbers = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 22px;
-
-  span:first-child {
-    min-width: 92px;
-    text-align: right;
-  }
-
-  span:last-child {
-    min-width: 92px;
-    text-align: right;
-  }
-`;
-
-const ResourceBar = styled.div`
-  grid-column: 2;
-  height: 12px;
-  margin-top: 6px;
-  background: rgba(0, 0, 0, 0.42);
-  border-radius: 999px;
-  overflow: hidden;
-`;
-
-const ResourceFill = styled.div`
-  height: 100%;
-  transition: width 220ms ease-out;
-`;
-
-const ProgressStack = styled.div`
-  width: 240px;
-  padding-top: 30px;
-`;
-
-const ProgressLabel = styled.div`
-  margin-bottom: 10px;
-  font-size: 18px;
-  text-transform: uppercase;
-`;
-
-const ProgressBar = styled.div`
-  height: 14px;
-  margin: 0 0 18px 22px;
-  background: rgba(0, 0, 0, 0.45);
-  border-radius: 999px;
-  overflow: hidden;
-
-  ${({ $limit }) =>
-    $limit &&
-    css`
-      animation: ${pulse} 1.2s linear infinite;
-    `}
-`;
-
-const ProgressFill = styled.div`
-  height: 100%;
-  transition: width 220ms ease-out;
-`;
-
-const BioBox = styled.div`
-  ${boxShell}
-  position: absolute;
-  left: 53px;
-  right: 220px;
-  top: 294px;
-  height: 340px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 14px;
-`;
-
-const BioLine = styled.p`
-  margin: 0;
-  font-size: 28px;
-  line-height: 1.14;
-  animation: ${lineIn} 180ms ease-out both;
-`;
-
-const MetaBox = styled.div`
-  ${boxShell}
-  right: 0;
-  bottom: 110px;
-  width: 280px;
-  height: 110px;
-  padding: 20px 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-`;
-
-const MetaRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  font-size: 18px;
-  text-transform: uppercase;
-
-  strong {
-    color: #fff;
-  }
-`;
-
-const PageArea = styled.div`
-  position: absolute;
-  top: 44px;
-  left: 0;
-  width: 1000px;
-  height: 720px;
-`;
-
-const HeaderBox = styled.div`
-  ${boxShell}
-  top: 0;
-  left: 0;
-  right: 315px;
-  height: 84px;
-  padding: 16px 22px;
-  display: flex;
-  align-items: center;
-`;
-
-const TallHeaderBox = styled(HeaderBox)`
-  height: 261px;
-  align-items: stretch;
-`;
-
-const HeaderLabel = styled.div`
-  font-size: 26px;
-  line-height: 1.3;
-  text-transform: uppercase;
-`;
-
-const HeaderRow = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const HeaderFile = styled.div`
-  font-size: 22px;
-  color: #fff5af;
-  text-transform: uppercase;
-`;
-
-const DescriptionBox = styled.div`
-  ${boxShell}
-  top: 93px;
-  left: 0;
-  right: 315px;
-  height: 87px;
-  padding: 16px 22px;
-  display: flex;
-  align-items: center;
-`;
-
-const DescriptionText = styled.div`
-  font-size: 24px;
-  line-height: 1.2;
-  text-transform: uppercase;
-`;
-
-const ContentLeftBox = styled.div`
-  ${boxShell}
-  top: 190px;
-  left: 0;
-  width: 485px;
-  bottom: 0;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-
-  ${({ $short }) =>
-    $short &&
-    css`
-      top: 359px;
-    `}
-`;
-
-const ContentRightBox = styled.div`
-  ${boxShell}
-  top: 190px;
-  right: 315px;
-  width: 470px;
-  bottom: 0;
-  padding: 20px 22px;
-  overflow: hidden;
-
-  ${({ $short }) =>
-    $short &&
-    css`
-      top: 359px;
-    `}
-`;
-
-const CompactStatus = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 18px;
-`;
-
-const PortraitChip = styled.div`
-  width: 74px;
-  height: 74px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(113, 198, 255, 0.9), rgba(95, 74, 255, 0.85));
-  font-size: 28px;
-`;
-
-const CompactStatusMeta = styled.div`
-  display: grid;
-  gap: 6px;
-
-  strong {
-    font-size: 24px;
-    text-transform: uppercase;
-  }
-
-  span {
-    font-size: 16px;
-    color: #d8e5ff;
-  }
-`;
-
-const InfoPanel = styled.div`
-  ${boxShell}
-  position: static;
-  min-height: 180px;
-  padding: 18px 20px;
-`;
-
-const InfoLine = styled.p`
-  margin: 0 0 10px;
-  font-size: 22px;
-  line-height: 1.25;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const ActionList = styled.div`
-  display: grid;
-  gap: 10px;
-  max-height: 100%;
-  overflow: auto;
-`;
-
-const ActionItemButton = styled.button`
-  ${interactiveHover}
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 10px 12px;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  text-align: left;
-  font-size: 20px;
-`;
-
-const ActionItemMain = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const ActionIcon = styled.div`
-  width: 36px;
-  color: #fff5af;
-`;
-
-const ActionCount = styled.div`
-  font-size: 18px;
-  color: #c5d9ff;
-`;
-
-const EquipmentColumn = styled.div`
-  display: grid;
-  gap: 18px;
-  align-content: center;
-`;
-
-const EquipmentLabel = styled.div`
-  font-size: 18px;
-  color: #8ddcff;
-  text-transform: uppercase;
-`;
-
-const EquipmentSlots = styled.div`
-  display: flex;
-  gap: 10px;
-`;
-
-const MateriaSlot = styled.div`
-  position: relative;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-
-  &[data-color='green'] {
-    background: radial-gradient(circle, #9effbb, #138c4f);
-  }
-
-  &[data-color='blue'] {
-    background: radial-gradient(circle, #80ecff, #2b5ef8);
-  }
-
-  &[data-color='yellow'] {
-    background: radial-gradient(circle, #ffe68a, #ff9d36);
-  }
-
-  &[data-color='pink'] {
-    background: radial-gradient(circle, #ffb2ea, #ba4bf0);
-  }
-
-  &[data-color='red'] {
-    background: radial-gradient(circle, #ffad9f, #f14c43);
-  }
-`;
-
-const SkillPreviewName = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 14px;
-  font-size: 34px;
-  text-transform: uppercase;
-
-  &::before {
-    content: '';
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #80ecff, #2b5ef8);
-  }
-
-  &[data-color='green']::before {
-    background: radial-gradient(circle, #9effbb, #138c4f);
-  }
-
-  &[data-color='blue']::before {
-    background: radial-gradient(circle, #80ecff, #2b5ef8);
-  }
-
-  &[data-color='yellow']::before {
-    background: radial-gradient(circle, #ffe68a, #ff9d36);
-  }
-
-  &[data-color='pink']::before {
-    background: radial-gradient(circle, #ffb2ea, #ba4bf0);
-  }
-
-  &[data-color='red']::before {
-    background: radial-gradient(circle, #ffad9f, #f14c43);
-  }
-`;
-
-const StarRow = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 18px;
-`;
-
-const StarDot = styled.div`
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: ${({ $active }) => ($active ? '#fff3a2' : 'rgba(255, 255, 255, 0.12)')};
-  box-shadow: ${({ $active }) => ($active ? '0 0 18px rgba(255, 243, 162, 0.55)' : 'none')};
-`;
-
-const MateriaInline = styled.span`
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #80ecff, #2b5ef8);
-
-  &[data-color='green'] {
-    background: radial-gradient(circle, #9effbb, #138c4f);
-  }
-
-  &[data-color='blue'] {
-    background: radial-gradient(circle, #80ecff, #2b5ef8);
-  }
-
-  &[data-color='yellow'] {
-    background: radial-gradient(circle, #ffe68a, #ff9d36);
-  }
-
-  &[data-color='pink'] {
-    background: radial-gradient(circle, #ffb2ea, #ba4bf0);
-  }
-
-  &[data-color='red'] {
-    background: radial-gradient(circle, #ffad9f, #f14c43);
-  }
-`;
-
-const HistoryBody = styled.div`
-  ${boxShell}
-  top: 93px;
-  left: 0;
-  right: 315px;
-  bottom: 0;
-  padding: 22px;
-`;
-
-const CenteredSelector = styled.div`
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  gap: 12px;
-`;
-
-const SelectorButton = styled.button`
-  ${interactiveHover}
-  border: 0;
-  background: transparent;
-  color: #fff;
-  font-size: 28px;
-  text-transform: uppercase;
-`;
-
-const LoadingWrap = styled.div`
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  gap: 18px;
-`;
-
-const LoadingLabel = styled.div`
-  font-size: 28px;
-  text-transform: uppercase;
-`;
-
-const MemoryBar = styled.div`
-  width: 430px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.14);
-  overflow: hidden;
-  border-radius: 6px;
-`;
-
-const MemoryFill = styled.div`
-  height: 100%;
-  background: linear-gradient(180deg, #2500cf, #6852ff 43%, #4831f7 55%, #2400d3 60%, transparent 90%);
-`;
-
-const HistoryCardList = styled.div`
-  display: grid;
-  gap: 18px;
-`;
-
-const HistoryCard = styled.a`
-  ${interactiveHover}
-  ${boxShell}
-  position: relative;
-  display: grid;
-  grid-template-columns: 118px 1fr 275px;
-  gap: 20px;
-  min-height: 235px;
-  padding: 22px;
-  color: #fff;
-`;
-
-const HistoryThumb = styled.div`
-  display: grid;
-  place-items: center;
-  background: linear-gradient(135deg, rgba(111, 206, 255, 0.24), rgba(255, 255, 255, 0.06));
-  border-radius: 12px;
-  font-size: 42px;
-`;
-
-const HistoryInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-`;
-
-const HistoryName = styled.h2`
-  margin: 0 0 10px;
-  font-size: 30px;
-  line-height: 1.1;
-  text-transform: uppercase;
-`;
-
-const HistoryMeta = styled.div`
-  margin-bottom: 12px;
-  color: #fff5af;
-  font-size: 22px;
-  text-transform: uppercase;
-`;
-
-const HistorySummary = styled.div`
-  font-size: 18px;
-  line-height: 1.45;
-  color: #d6e3ff;
-`;
-
-const HistoryMetaBox = styled.div`
-  ${boxShell}
-  position: static;
-  min-height: 100%;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 16px;
-`;
-
-const ConfigBody = styled.div`
-  ${boxShell}
-  top: 93px;
-  left: 0;
-  right: 315px;
-  bottom: 0;
-  padding: 28px 32px;
-  display: grid;
-  align-content: start;
-  gap: 34px;
-`;
-
-const ConfigRow = styled.div`
-  display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 28px;
-  align-items: start;
-`;
-
-const ConfigLabel = styled.div`
-  font-size: 24px;
-  color: #8ddcff;
-  text-transform: uppercase;
-  padding-top: 8px;
-`;
-
-const ColorPicker = styled.div`
-  position: relative;
-`;
-
-const ColorQuadrants = styled.div`
-  position: relative;
-  width: 224px;
-  height: 88px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 6px;
-`;
-
-const ColorQuadrantButton = styled.button`
-  border: 2px solid ${({ $active }) => ($active ? '#fff5af' : 'rgba(255, 255, 255, 0.22)')};
-  background: transparent;
-  cursor: pointer;
-`;
-
-const SliderGroup = styled.div`
-  margin-top: 18px;
-  display: grid;
-  gap: 12px;
-`;
-
-const SliderRow = styled.label`
-  display: grid;
-  grid-template-columns: 20px 48px 1fr;
-  gap: 12px;
-  align-items: center;
-  font-size: 18px;
-`;
-
-const SliderInput = styled.input`
-  width: 100%;
-`;
-
-const ToggleButtons = styled.div`
-  display: flex;
-  gap: 22px;
-`;
-
-const ToggleButton = styled.button`
-  ${interactiveHover}
-  min-width: 88px;
-  border: 0;
-  background: transparent;
-  color: ${({ $active }) => ($active ? '#fff5af' : '#fff')};
-  font-size: 24px;
-  text-transform: uppercase;
-`;
