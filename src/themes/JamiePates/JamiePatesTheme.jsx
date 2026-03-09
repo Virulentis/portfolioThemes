@@ -415,6 +415,7 @@ export function JamiePatesTheme() {
   const [historyPhase, setHistoryPhase] = useState('select');
   const [historyMode, setHistoryMode] = useState('experience');
   const [historyProgress, setHistoryProgress] = useState(0);
+  const [historyReady, setHistoryReady] = useState(false);
   const [portraitShake, setPortraitShake] = useState(false);
   const [portraitDying, setPortraitDying] = useState(false);
   const [damageValue, setDamageValue] = useState(null);
@@ -516,22 +517,32 @@ export function JamiePatesTheme() {
   }, [soundEnabled, crtEnabled, windowColor]);
 
   useEffect(() => {
+    if (page !== 'history' || historyPhase !== 'select') return undefined;
+
+    setHistoryReady(false);
+    const timer = window.setTimeout(() => {
+      setHistoryReady(true);
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+  }, [page, historyPhase]);
+
+  useEffect(() => {
     if (historyPhase !== 'loading') return undefined;
 
-    const timer = window.setInterval(() => {
-      setHistoryProgress((value) => {
-        const next = value + 10;
-        if (next >= 100) {
-          playSound('save');
-          window.setTimeout(() => setHistoryPhase('loaded'), 100);
-          return 110;
-        }
-        return next;
-      });
+    const timer = window.setTimeout(() => {
+      if (historyProgress >= 100) {
+        playSound('save');
+        setHistoryProgress(110);
+        setHistoryPhase('loaded');
+        return;
+      }
+
+      setHistoryProgress((value) => value + 10);
     }, 80);
 
-    return () => window.clearInterval(timer);
-  }, [historyPhase, soundEnabled]);
+    return () => window.clearTimeout(timer);
+  }, [historyPhase, historyProgress, soundEnabled]);
 
   if (!cv) return null;
 
@@ -550,6 +561,7 @@ export function JamiePatesTheme() {
     if (nextPage !== 'history') {
       setHistoryPhase('select');
       setHistoryProgress(0);
+      setHistoryReady(false);
     }
   }
 
@@ -596,6 +608,7 @@ export function JamiePatesTheme() {
   }
 
   function setHistory(type) {
+    if (!historyReady) return;
     playSound('select');
     setHistoryMode(type);
     setHistoryPhase('loading');
@@ -1023,14 +1036,14 @@ export function JamiePatesTheme() {
                       </div>
                       <WindowBox label="memCardSelector" className="absolute z-1 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={windowStyle}>
                         <ul className="_historyOptions_1g8c2_1 flex flex-col items-center gap-1">
-                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => playSound('select')}>
+                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => historyReady && playSound('select')}>
                             <button type="button" className="jp-button-reset" onClick={() => setHistory('experience')}>
-                              {GlyphText({ text: 'Work' })}
+                              {GlyphText({ text: 'Work', color: historyReady ? 'white' : 'grey' })}
                             </button>
                           </li>
-                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => playSound('select')}>
+                          <li className="w-full flex justify-center mr-1" onMouseEnter={() => historyReady && playSound('select')}>
                             <button type="button" className="jp-button-reset" onClick={() => setHistory('education')}>
-                              {GlyphText({ text: 'Education' })}
+                              {GlyphText({ text: 'Education', color: historyReady ? 'white' : 'grey' })}
                             </button>
                           </li>
                         </ul>
@@ -1046,7 +1059,7 @@ export function JamiePatesTheme() {
                         </WindowBox>
                       </div>
                       <WindowBox label="memCardLoadingBar" className="w-[27rem] h-[6rem] absolute z-2 left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" style={windowStyle}>
-                        <div className="_memCardLoadingBar_1afn4_1 h-[3rem]" data-progress={Math.min(100, historyProgress)} style={{ width: `${historyProgress}%` }} />
+                        <div className="_memCardLoadingBar_1afn4_1 h-[3rem]" data-progress={historyProgress} style={{ width: `${historyProgress}%` }} />
                       </WindowBox>
                     </>
                   )}
