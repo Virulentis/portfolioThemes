@@ -68,10 +68,10 @@ cv:
         end_date: 2025-12
         spacing_after: different_company
         highlights:
-          - Analyzed existing manual processes and identified key bottlenecks, resulting in targeted automation solutions that improved overall workflow efficiency
-          - Implemented error-handling procedures that caught and resolved data validation issues before they reached end users
-          - Automated repetitive tasks, allowing team to reallocate 5+ hours/week to higher-value work
-          - Designed and deployed a Power Automate workflow to streamline user submissions, significantly reducing manual effort and improving efficiency
+          - Architected and iterated through 3 major revisions of an end-to-end article submission pipeline using Power Automate, SharePoint, and Microsoft Forms, processing submissions from intake through cost calculation, approval, and print-ready export
+          - Built 5 interconnected automation flows orchestrated via a state-machine pattern using SharePoint status columns, eliminating manual handoffs between review stages
+          - Migrated file storage to SharePoint DocSets, reducing data duplication by ~67% and consolidating previously scattered references into a single source of truth
+          - Authored comprehensive technical documentation covering all flows, including Mermaid workflow diagrams, maintenance notes, and a glossary for future developers
 
 
       - company: UNBC
@@ -93,9 +93,8 @@ cv:
         end_date: 2022-08
         spacing_after: different_company
         highlights:
-          - Supported departmental IT needs, including hardware troubleshooting and software updates
-          - Coordinated disposal and recycling of outdated hardware and supplies
-          - Supported the Williams Lake fire centre during fire season, working independently and under pressure
+          - Temporarily deployed to the Williams Lake Fire Centre for one month during active fire season, working 12-hour shifts in the planning department to audit and correct field contract manifests for crew deployments
+          - Cleared the full manifest backlog 2–3 months ahead of the typical Oct/Nov timeline by systematically identifying errors, tracking missing information, and coordinating with field staff to resolve discrepancies
 
       - company: Surplus Herby's
         position: Sales Associate
@@ -177,11 +176,6 @@ cv:
           -   Technologies – Python, Raspberry Pi, Ultrasonic Sensors
         
       
-      
-
-    
-        
-    achievements:
       - name: Western Canada Engineering Competition - Junior Design
         date: 2026
         summary: Built a greenhouse prototype engineered for extreme weather conditions including wind, seismic activity, and heavy snowfall for Alberta climate.
