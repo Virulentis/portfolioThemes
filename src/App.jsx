@@ -200,7 +200,7 @@ export default function App() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <TopBar $darkMode={darkMode}>
+      {/* <TopBar $darkMode={darkMode}>
         <ThemeInfo>
           <ThemeLabel $darkMode={darkMode}>Theme:</ThemeLabel>
           <CurrentThemeName $darkMode={darkMode}>{currentTheme?.name}</CurrentThemeName>
@@ -278,7 +278,7 @@ export default function App() {
             )}
           </ModeToggleSmall>
         </TopBarActions>
-      </TopBar>
+      </TopBar> */}
       <ThemeContainer>
         {ThemeComponent ? <ThemeComponent darkMode={darkMode} /> : <div>No theme selected</div>}
       </ThemeContainer>
